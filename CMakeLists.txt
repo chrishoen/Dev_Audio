@@ -13,6 +13,9 @@ my_special1()
 add_subdirectory ("Test")
 return()
 
+add_subdirectory ("audio-test")
+return()
+
 add_subdirectory ("CCLib")
 add_subdirectory ("ShareLib")
 add_subdirectory ("RingWriter")

@@ -17,7 +17,8 @@ endfunction()
 
 function(my_inc_import_RisLib _target)
 
-   set (MyRisLibIncludePath  "/mnt/c/Prime/AAA_Stenograph/NextGen/src_linux/gui/target/rislib/include")
+#  set (MyRisLibIncludePath  "/mnt/c/Prime/AAA_Stenograph/NextGen/src_linux/gui/target/rislib/include")
+   set (MyRisLibIncludePath  "/opt/prime/include/RisLib")
    target_include_directories(${_target} PUBLIC ${MyRisLibIncludePath})
 
 endfunction()

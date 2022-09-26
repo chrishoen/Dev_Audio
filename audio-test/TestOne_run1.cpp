@@ -98,7 +98,7 @@ void TestOne::doRun1()
       pa_ml = pa_mainloop_new();
       pa_mlapi = pa_mainloop_get_api(pa_ml);
       pa_ctx = pa_context_new(pa_mlapi, "Simple PA test application");
-      pa_context_connect(pa_ctx, NULL, 0, NULL);
+      pa_context_connect(pa_ctx, NULL, (pa_context_flags_t)0, NULL);
 
       // This function defines a callback so the server will tell us it's state.
       // Our callback will wait for the state to be ready.  The callback will
@@ -132,14 +132,11 @@ void TestOne::doRun1()
       bufattr.prebuf = (uint32_t)-1;
       bufattr.tlength = pa_usec_to_bytes(latency, &ss);
       r = pa_stream_connect_playback(playstream, NULL, &bufattr,
-         PA_STREAM_INTERPOLATE_TIMING
-         | PA_STREAM_ADJUST_LATENCY
-         | PA_STREAM_AUTO_TIMING_UPDATE, NULL, NULL);
+         (pa_stream_flags_t)(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
       if (r < 0) {
          // Old pulse audio servers don't like the ADJUST_LATENCY flag, so retry without that
          r = pa_stream_connect_playback(playstream, NULL, &bufattr,
-            PA_STREAM_INTERPOLATE_TIMING |
-            PA_STREAM_AUTO_TIMING_UPDATE, NULL, NULL);
+            (pa_stream_flags_t)(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
       }
       if (r < 0) {
          printf("pa_stream_connect_playback failed\n");
@@ -156,6 +153,8 @@ void TestOne::doRun1()
       pa_context_disconnect(pa_ctx);
       pa_context_unref(pa_ctx);
       pa_mainloop_free(pa_ml);
+      printf("TestOne::doRun1 %d\n", retval);
+
       return;
 }
 

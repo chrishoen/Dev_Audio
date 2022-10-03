@@ -20,7 +20,7 @@ static pa_sample_spec ss;
 
 // This callback gets called when our context changes state.  We really only
 // care about when it's ready or if it has failed
-void pa_state_cb(pa_context* c, void* userdata) {
+static void pa_state_cb(pa_context* c, void* userdata) {
    pa_context_state_t state;
    int* pa_ready = (int*)userdata;
    state = pa_context_get_state(c);

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "CmdLineExec.h"
+#include "auPlay.h"
 #include "TestOne.h"
 
 #include "CmdLineExec.h"
@@ -25,6 +26,7 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
    if (aCmd->isCmd("GO5"))   executeGo5(aCmd);
    if (aCmd->isCmd("Parms")) executeParms(aCmd);
 
+   if (aCmd->isCmd("PLAY"))     executePlay(aCmd);
    if (aCmd->isCmd("RUN1"))     executeRun1(aCmd);
    if (aCmd->isCmd("RUN2"))     executeRun2(aCmd);
 
@@ -36,6 +38,15 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
 
 void CmdLineExec::executeGo1(Ris::CmdLineCmd* aCmd)
 {
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
+void CmdLineExec::executePlay(Ris::CmdLineCmd* aCmd)
+{
+   AU::doPlay();
 }
 
 //******************************************************************************

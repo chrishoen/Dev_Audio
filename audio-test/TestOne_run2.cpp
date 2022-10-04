@@ -158,7 +158,7 @@ out:
    pa_threaded_mainloop_unlock(pa);
 }
 
-void TestOne::doRun2()
+void doRun2()
 {
    pa_threaded_mainloop* pa = pa_threaded_mainloop_new();
    if (!pa) {

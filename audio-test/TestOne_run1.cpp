@@ -76,7 +76,7 @@ static void stream_underflow_cb(pa_stream* s, void* userdata) {
 //******************************************************************************
 //******************************************************************************
 
-void TestOne::doRun1()
+void doRun1()
 {
       pa_mainloop* pa_ml;
       pa_mainloop_api* pa_mlapi;

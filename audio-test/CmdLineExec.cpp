@@ -55,8 +55,7 @@ void CmdLineExec::executePlay(Ris::CmdLineCmd* aCmd)
 
 void CmdLineExec::executeRun1(Ris::CmdLineCmd* aCmd)
 {
-   TestOne tTestOne;
-   tTestOne.doRun1();
+   doRun1();
 }
 
 //******************************************************************************
@@ -65,8 +64,7 @@ void CmdLineExec::executeRun1(Ris::CmdLineCmd* aCmd)
 
 void CmdLineExec::executeRun2(Ris::CmdLineCmd* aCmd)
 {
-   TestOne tTestOne;
-   tTestOne.doRun2();
+   doRun2();
 }
 
 //******************************************************************************

@@ -29,23 +29,32 @@ void stream_state_cb(pa_stream* s, void* mainloop)
    pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
 }
 
+static constexpr double cDsp_Pi = 3.14159265358979323846264338327950288419716939937510;
+static constexpr double cDsp_TwoPi = 2.0 * cDsp_Pi;
+static double mTime = 0;
+static double mSampleFreq = 44100;
+static double mSamplePeriod = 1/mSampleFreq;
+static double mAudioFreq = 441;
+
 void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
 {
    size_t bytes_remaining = requested_bytes;
    while (bytes_remaining > 0)
    {
-      uint8_t* buffer = NULL;
+      // Begin write.
+      short* buffer = NULL;
       size_t bytes_to_fill = 44100;
-      size_t i;
+      int retval = 0;
 
       if (bytes_to_fill > bytes_remaining) bytes_to_fill = bytes_remaining;
 
       pa_stream_begin_write(stream, (void**)&buffer, &bytes_to_fill);
 
-      for (i = 0; i < bytes_to_fill; i += 2)
+      int nsamples = (int)bytes_to_fill / 2;
+      for (int i = 0; i < nsamples; i++)
       {
-         buffer[i] = (i % 100) * 40 / 100 + 44;
-         buffer[i + 1] = (i % 100) * 40 / 100 + 44;
+         buffer[i] = (short)(32000 * cos(cDsp_TwoPi * mAudioFreq * mTime));
+         mTime += mSamplePeriod;
       }
 
       pa_stream_write(stream, buffer, bytes_to_fill, NULL, 0LL, PA_SEEK_RELATIVE);
@@ -66,7 +75,7 @@ static pa_mainloop_api* mainloop_api;
 static pa_context* context;
 static pa_stream* stream;
 
-void doRun3()
+void doRun4()
 {
    int retval;
 
@@ -104,16 +113,15 @@ void doRun3()
       pa_threaded_mainloop_wait(mainloop);
    }
 
+   printf("ready\n");
+
    // Create a playback stream
-   pa_sample_spec sample_specifications;
-   sample_specifications.format = FORMAT;
-   sample_specifications.rate = RATE;
-   sample_specifications.channels = 2;
+   pa_sample_spec sample_spec;
+   sample_spec.rate = 44100;
+   sample_spec.channels = 1;
+   sample_spec.format = PA_SAMPLE_S16LE;
 
-   pa_channel_map map;
-   pa_channel_map_init_stereo(&map);
-
-   stream = pa_stream_new(context, "Playback", &sample_specifications, &map);
+   stream = pa_stream_new(context, "Playback", &sample_spec, NULL);
    pa_stream_set_state_callback(stream, stream_state_cb, mainloop);
    pa_stream_set_write_callback(stream, stream_write_cb, mainloop);
 
@@ -151,7 +159,7 @@ void doRun3()
    printf("running\n");
 }
 
-void doStop3()
+void doStop4()
 {
    printf("stopping\n");
    pa_threaded_mainloop_stop(mainloop);

@@ -30,7 +30,8 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
    if (aCmd->isCmd("RUN1"))     executeRun1(aCmd);
    if (aCmd->isCmd("RUN2"))     executeRun2(aCmd);
    if (aCmd->isCmd("RUN3"))     executeRun3(aCmd);
-   if (aCmd->isCmd("S"))        executeStop3(aCmd);
+   if (aCmd->isCmd("RUN4"))     executeRun4(aCmd);
+   if (aCmd->isCmd("S"))        executeStop4(aCmd);
 }
 
 //******************************************************************************
@@ -67,6 +68,24 @@ void CmdLineExec::executeRun3(Ris::CmdLineCmd* aCmd)
 void CmdLineExec::executeStop3(Ris::CmdLineCmd* aCmd)
 {
    doStop3();
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
+void CmdLineExec::executeRun4(Ris::CmdLineCmd* aCmd)
+{
+   doRun4();
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
+void CmdLineExec::executeStop4(Ris::CmdLineCmd* aCmd)
+{
+   doStop4();
 }
 
 //******************************************************************************

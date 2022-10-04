@@ -11,150 +11,168 @@ Description:
 
 #include "TestOne.h"
 
-static int latency = 20000; // start latency in micro seconds
-static int sampleoffs = 0;
-static short sampledata[300000];
-static pa_buffer_attr bufattr;
-static int underflows = 0;
-static pa_sample_spec ss;
+static void context_on_state_change(pa_context* ctx, pa_threaded_mainloop* pa)
+{
+   pa_threaded_mainloop_signal(pa, 0);
+}
 
-// This callback gets called when our context changes state.  We really only
-// care about when it's ready or if it has failed
-static void pa_state_cb(pa_context* c, void* userdata) {
-   pa_context_state_t state;
-   int* pa_ready = (int*)userdata;
-   state = pa_context_get_state(c);
-   switch (state) {
-      // These are just here for reference
-   case PA_CONTEXT_UNCONNECTED:
-   case PA_CONTEXT_CONNECTING:
-   case PA_CONTEXT_AUTHORIZING:
-   case PA_CONTEXT_SETTING_NAME:
-   default:
-      break;
-   case PA_CONTEXT_FAILED:
-   case PA_CONTEXT_TERMINATED:
-      *pa_ready = 2;
-      break;
-   case PA_CONTEXT_READY:
-      *pa_ready = 1;
-      break;
+static void stream_on_state_change(pa_stream* strm, pa_threaded_mainloop* pa)
+{
+   pa_threaded_mainloop_signal(pa, 0);
+}
+
+static void context_poll_unless(pa_threaded_mainloop* pa, pa_context* ctx, pa_context_state_t state)
+{
+   for (;;) {
+      pa_context_state_t s;
+      pa_threaded_mainloop_lock(pa);
+      s = pa_context_get_state(ctx);
+      pa_threaded_mainloop_unlock(pa);
+      if (s == state)
+         break;
+      pa_threaded_mainloop_wait(pa);
    }
 }
 
-static void stream_request_cb(pa_stream* s, size_t length, void* userdata) {
-   pa_usec_t usec;
-   int neg;
-   pa_stream_get_latency(s, &usec, &neg);
-   printf("  latency %8d us\n", (int)usec);
-   if (sampleoffs * 2 + length > sizeof(sampledata)) {
-      sampleoffs = 0;
-   }
-   if (length > sizeof(sampledata)) {
-      length = sizeof(sampledata);
-   }
-   pa_stream_write(s, &sampledata[sampleoffs], length, NULL, 0LL, PA_SEEK_RELATIVE);
-   sampleoffs += length / 2;
-}
-
-static void stream_underflow_cb(pa_stream* s, void* userdata) {
-   // We increase the latency by 50% if we get 6 underflows and latency is under 2s
-   // This is very useful for over the network playback that can't handle low latencies
-   printf("underflow\n");
-   underflows++;
-   if (underflows >= 6 && latency < 2000000) {
-      latency = (latency * 3) / 2;
-      bufattr.maxlength = pa_usec_to_bytes(latency, &ss);
-      bufattr.tlength = pa_usec_to_bytes(latency, &ss);
-      pa_stream_set_buffer_attr(s, &bufattr, NULL, NULL);
-      underflows = 0;
-      printf("latency increased to %d\n", latency);
+static void stream_poll_unless(pa_threaded_mainloop* pa, pa_stream* strm, pa_stream_state_t state)
+{
+   for (;;) {
+      pa_stream_state_t s;
+      pa_threaded_mainloop_lock(pa);
+      s = pa_stream_get_state(strm);
+      pa_threaded_mainloop_unlock(pa);
+      if (s == state)
+         break;
+      pa_threaded_mainloop_wait(pa);
    }
 }
 
-//******************************************************************************
-//******************************************************************************
-//******************************************************************************
+static void myMain(pa_threaded_mainloop* pa)
+{
+   pa_mainloop_api* api = pa_threaded_mainloop_get_api(pa);
+   pa_context* ctx = pa_context_new(api, "default");
+   pa_stream* strm = NULL;
+   int err;
+
+   {
+      pa_threaded_mainloop_lock(pa);
+      err = pa_context_connect(ctx, NULL, (pa_context_flags_t)0, NULL);
+      if (err < 0) {
+         pa_threaded_mainloop_unlock(pa);
+         fprintf(stderr, "Could not connect to the server (%s)\n",
+            pa_strerror(err));
+         return;
+      }
+      pa_context_set_state_callback(ctx,
+         (pa_context_notify_cb_t)context_on_state_change, pa);
+      pa_threaded_mainloop_unlock(pa);
+   }
+
+   context_poll_unless(pa, ctx, PA_CONTEXT_READY);
+
+   {
+      pa_threaded_mainloop_lock(pa);
+      {
+         pa_sample_spec ss;
+         ss.channels = 1;
+         ss.format = PA_SAMPLE_FLOAT32LE;
+         ss.rate = 22050;
+         strm = pa_stream_new(ctx, "default", &ss, NULL);
+         if (!strm) {
+            pa_threaded_mainloop_unlock(pa);
+            fprintf(stderr, "Failed to create a new stream\n");
+            goto out;
+         }
+      }
+
+      pa_stream_set_state_callback(strm,
+         (pa_stream_notify_cb_t)stream_on_state_change, pa);
+      pa_threaded_mainloop_unlock(pa);
+   }
+
+   context_poll_unless(pa, ctx, PA_CONTEXT_READY);
+
+   {
+      pa_threaded_mainloop_lock(pa);
+      err = pa_stream_connect_playback(strm, NULL, NULL, (pa_stream_flags_t)0, NULL, NULL);
+      if (err < 0) {
+         pa_threaded_mainloop_unlock(pa);
+         fprintf(stderr, "Failed to connect the stream to sink (%s)\n",
+            pa_strerror(err));
+         goto out;
+      }
+      pa_threaded_mainloop_unlock(pa);
+   }
+
+   {
+      float* samples;
+      size_t nbytes;
+      int count = 0;
+      int period = 2;
+      int iteration = 0;
+      for (;;) {
+         size_t nsamples;
+         size_t i;
+
+         context_poll_unless(pa, ctx, PA_CONTEXT_READY);
+         stream_poll_unless(pa, strm, PA_STREAM_READY);
+
+         pa_threaded_mainloop_lock(pa);
+         err = pa_stream_begin_write(strm, (void**)&samples, &nbytes);
+         if (err < 0) {
+            pa_threaded_mainloop_unlock(pa);
+            fprintf(stderr, "WTF? (%s)\n", pa_strerror(err));
+            goto out;
+         }
+         nsamples = nbytes / sizeof(*samples);
+         for (i = 0; i < nsamples; i++) {
+            if (count < period / 2)
+               samples[i] = 0.5;
+            else
+               samples[i] = -0.5;
+            count++;
+            if (count == period) {
+               count = 0;
+               iteration++;
+               if (iteration > 10) {
+                  iteration = 0;
+                  period++;
+               }
+            }
+         }
+         if (pa_stream_write(strm, samples, nsamples * sizeof(*samples),
+            NULL, 0, PA_SEEK_RELATIVE) < 0) {
+            pa_threaded_mainloop_unlock(pa);
+            fprintf(stderr, "WTF?\n");
+            goto out;
+         }
+         pa_threaded_mainloop_unlock(pa);
+      }
+   }
+
+out:
+   pa_threaded_mainloop_lock(pa);
+   if (strm)
+      pa_stream_disconnect(strm);
+   pa_context_disconnect(ctx);
+   pa_threaded_mainloop_unlock(pa);
+}
 
 void TestOne::doRun2()
 {
-      pa_mainloop* pa_ml;
-      pa_mainloop_api* pa_mlapi;
-      pa_context* pa_ctx;
-      pa_stream* playstream;
-      int r;
-      int pa_ready = 0;
-      int retval = 0;
-      unsigned int a;
-      double amp;
-
-      // Create some data to play
-      for (a = 0; a < sizeof(sampledata) / 2; a++) {
-         amp = cos(5000 * (double)a / 44100.0);
-         sampledata[a] = amp * 32000.0;
-      }
-
-      // Create a mainloop API and connection to the default server
-      pa_ml = pa_mainloop_new();
-      pa_mlapi = pa_mainloop_get_api(pa_ml);
-      pa_ctx = pa_context_new(pa_mlapi, "Simple PA test application");
-      pa_context_connect(pa_ctx, NULL, (pa_context_flags_t)0, NULL);
-
-      // This function defines a callback so the server will tell us it's state.
-      // Our callback will wait for the state to be ready.  The callback will
-      // modify the variable to 1 so we know when we have a connection and it's
-      // ready.
-      // If there's an error, the callback will set pa_ready to 2
-      pa_context_set_state_callback(pa_ctx, pa_state_cb, &pa_ready);
-
-      // We can't do anything until PA is ready, so just iterate the mainloop
-      // and continue
-      while (pa_ready == 0) {
-         pa_mainloop_iterate(pa_ml, 1, NULL);
-      }
-      if (pa_ready == 2) {
-         retval = -1;
-         goto exit;
-      }
-
-      ss.rate = 44100;
-      ss.channels = 1;
-      ss.format = PA_SAMPLE_S16LE;
-      playstream = pa_stream_new(pa_ctx, "Playback", &ss, NULL);
-      if (!playstream) {
-         printf("pa_stream_new failed\n");
-      }
-      pa_stream_set_write_callback(playstream, stream_request_cb, NULL);
-      pa_stream_set_underflow_callback(playstream, stream_underflow_cb, NULL);
-      bufattr.fragsize = (uint32_t)-1;
-      bufattr.maxlength = pa_usec_to_bytes(latency, &ss);
-      bufattr.minreq = pa_usec_to_bytes(0, &ss);
-      bufattr.prebuf = (uint32_t)-1;
-      bufattr.tlength = pa_usec_to_bytes(latency, &ss);
-      r = pa_stream_connect_playback(playstream, NULL, &bufattr,
-         (pa_stream_flags_t)(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
-      if (r < 0) {
-         // Old pulse audio servers don't like the ADJUST_LATENCY flag, so retry without that
-         r = pa_stream_connect_playback(playstream, NULL, &bufattr,
-            (pa_stream_flags_t)(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
-      }
-      if (r < 0) {
-         printf("pa_stream_connect_playback failed\n");
-         retval = -1;
-         goto exit;
-      }
-
-      // Run the mainloop until pa_mainloop_quit() is called
-      // (this example never calls it, so the mainloop runs forever).
-      pa_mainloop_run(pa_ml, NULL);
-
-   exit:
-      // clean up and disconnect
-      pa_context_disconnect(pa_ctx);
-      pa_context_unref(pa_ctx);
-      pa_mainloop_free(pa_ml);
-      printf("TestOne::doRun1 %d\n", retval);
-
+   pa_threaded_mainloop* pa = pa_threaded_mainloop_new();
+   if (!pa) {
+      fprintf(stderr, "Failed to initialize pulseaudio\n");
       return;
-}
+   }
 
+   if (pa_threaded_mainloop_start(pa) < 0) {
+      fprintf(stderr, "Failed to start the main loop\n");
+      return;
+   }
+
+   myMain(pa);
+
+   pa_threaded_mainloop_free(pa);
+   return;
+}

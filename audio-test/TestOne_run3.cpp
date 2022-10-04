@@ -31,6 +31,8 @@ void stream_state_cb(pa_stream* s, void* mainloop)
 
 void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
 {
+   printf("stream_write_cb %d\n", (int)requested_bytes);
+
    size_t bytes_remaining = requested_bytes;
    while (bytes_remaining > 0)
    {
@@ -59,14 +61,13 @@ void stream_success_cb(pa_stream* stream, int success, void* userdata) {
 }
 
 
-
+static pa_threaded_mainloop* mainloop;
+static pa_mainloop_api* mainloop_api;
+static pa_context* context;
+static pa_stream* stream;
 
 void doRun3()
 {
-   pa_threaded_mainloop* mainloop;
-   pa_mainloop_api* mainloop_api;
-   pa_context* context;
-   pa_stream* stream;
    int retval;
 
    // Get a mainloop and its context
@@ -147,9 +148,14 @@ void doRun3()
    // Uncork the stream so it will start playing
    pa_stream_cork(stream, 0, stream_success_cb, mainloop);
 
-   printf("LINE101\n");
-
-   // Play until we get a character
-   getc(stdin);
+   printf("running\n");
 }
 
+void doStop3()
+{
+   printf("stopping\n");
+   pa_threaded_mainloop_stop(mainloop);
+   pa_stream_disconnect(stream);
+   pa_context_disconnect(context);
+   printf("stopped\n");
+}

@@ -30,7 +30,7 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
    if (aCmd->isCmd("RUN1"))     executeRun1(aCmd);
    if (aCmd->isCmd("RUN2"))     executeRun2(aCmd);
    if (aCmd->isCmd("RUN3"))     executeRun3(aCmd);
-
+   if (aCmd->isCmd("S"))        executeStop3(aCmd);
 }
 
 //******************************************************************************
@@ -64,6 +64,15 @@ void CmdLineExec::executeRun3(Ris::CmdLineCmd* aCmd)
 //******************************************************************************
 //******************************************************************************
 
+void CmdLineExec::executeStop3(Ris::CmdLineCmd* aCmd)
+{
+   doStop3();
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
 void CmdLineExec::executePlay(Ris::CmdLineCmd* aCmd)
 {
    AU::doPlay();
@@ -75,6 +84,7 @@ void CmdLineExec::executePlay(Ris::CmdLineCmd* aCmd)
 
 void CmdLineExec::executeGo1(Ris::CmdLineCmd* aCmd)
 {
+   printf("GO1 GO1 GO1 GO1 GO1 GO1 \n");
 }
 
 //******************************************************************************

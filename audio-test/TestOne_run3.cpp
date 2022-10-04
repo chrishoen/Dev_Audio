@@ -31,8 +31,6 @@ void stream_state_cb(pa_stream* s, void* mainloop)
 
 void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
 {
-   printf("stream_write_cb %d\n", (int)requested_bytes);
-
    size_t bytes_remaining = requested_bytes;
    while (bytes_remaining > 0)
    {
@@ -43,6 +41,8 @@ void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
       if (bytes_to_fill > bytes_remaining) bytes_to_fill = bytes_remaining;
 
       pa_stream_begin_write(stream, (void**)&buffer, &bytes_to_fill);
+      printf("stream_write_cb %d %d\n", (int)requested_bytes, (int)bytes_to_fill);
+
 
       for (i = 0; i < bytes_to_fill; i += 2)
       {

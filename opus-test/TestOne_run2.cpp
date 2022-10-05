@@ -12,16 +12,12 @@ Description:
 #include <pulse/pulseaudio.h>
 #include <opus/opusfile.h>
 
-#define FORMAT PA_SAMPLE_U8
-#define RATE 44100
-
 static void context_state_cb(pa_context* context, void* mainloop);
 static void stream_state_cb(pa_stream* s, void* mainloop);
 static void stream_success_cb(pa_stream* stream, int success, void* userdata);
 static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata);
 
 static const char* cFilePath = "/opt/prime/single/kashmir1.opus";
-static short mBuffer[10000];
 static OggOpusFile* mFile = 0;
 
 void context_state_cb(pa_context* context, void* mainloop)
@@ -33,13 +29,6 @@ void stream_state_cb(pa_stream* s, void* mainloop)
 {
    pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
 }
-
-static constexpr double cDsp_Pi = 3.14159265358979323846264338327950288419716939937510;
-static constexpr double cDsp_TwoPi = 2.0 * cDsp_Pi;
-static double mTime = 0;
-static double mSampleFreq = 44100;
-static double mSamplePeriod = 1/mSampleFreq;
-static double mAudioFreq = 441;
 
 int write_count = 0;
 void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)

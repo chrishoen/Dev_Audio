@@ -31,6 +31,7 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
    if (aCmd->isCmd("RUN2"))  doRun2();
    if (aCmd->isCmd("S"))     doStop2();
 
+   if (aCmd->isCmd("INFO"))  doShowInfo();
 }
 
 //******************************************************************************

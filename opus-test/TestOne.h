@@ -16,3 +16,5 @@ void doStop1();
 
 void doRun2();
 void doStop2();
+
+void doShowInfo();

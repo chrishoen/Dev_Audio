@@ -30,6 +30,7 @@ endfunction()
 function(my_lib_import_Audio _target)
 
    target_link_libraries(${_target} pulse)
+   target_link_libraries(${_target} opusfile)
 
 endfunction()
 

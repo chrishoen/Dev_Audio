@@ -17,3 +17,6 @@ void doStop1();
 void doRun21();
 void doRun22();
 void doRun23();
+
+void doRun3();
+void doStop3();

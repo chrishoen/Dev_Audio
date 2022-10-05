@@ -10,9 +10,10 @@ include(MySpecial.cmake)
 project ("Dev_Audio")
 my_special1() 
 
-add_subdirectory ("audio-test")
+add_subdirectory ("opus-test")
 return()
 
+add_subdirectory ("audio-test")
 add_subdirectory ("Test")
 return()
 

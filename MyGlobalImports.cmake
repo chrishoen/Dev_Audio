@@ -34,6 +34,14 @@ function(my_lib_import_Audio _target)
 
 endfunction()
 
+function(my_inc_import_Audio _target)
+
+#  target_include_directories(${_target} PRIVATE "/opt/usr_data/sdk/sysroots/aarch64-fslc-linux/include/opus")
+   target_include_directories(${_target} PRIVATE "/opt/prime/include/opus")
+
+endfunction()
+
+
 #*******************************************************************************
 #*******************************************************************************
 #*******************************************************************************

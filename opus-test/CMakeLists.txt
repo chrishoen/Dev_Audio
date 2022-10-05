@@ -7,6 +7,8 @@ my_add_compile_options (${project})
 my_add_pch (${project})
 
 my_inc_import_RisLib(${project})
+my_inc_import_Audio(${project})
+
 my_lib_import_Audio(${project})
 my_lib_import_RisLib(${project})
 

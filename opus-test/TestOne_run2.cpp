@@ -30,6 +30,21 @@ void stream_state_cb(pa_stream* s, void* mainloop)
    pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
 }
 
+static void stream_underflow_cb(pa_stream* s, void* userdata)
+{
+   printf("underflow\n");
+}
+
+static void stream_overflow_cb(pa_stream* s, void* userdata)
+{
+   printf("overflow\n");
+}
+
+static void stream_success_cb(pa_stream* stream, int success, void* userdata)
+{
+   return;
+}
+
 int write_count = 0;
 void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
 {
@@ -55,23 +70,12 @@ void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
 
       bytes_remaining -= bytes_read;
 
-      printf("stream_write_cb %d %d %d %d\n", write_count++, (int)requested_bytes, (int)bytes_to_fill, (int)bytes_remaining);
+      printf("stream_write_cb %d %d %d %d\n",
+         write_count++,
+         (int)requested_bytes,
+         (int)bytes_to_fill,
+         (int)bytes_remaining);
    }
-}
-
-static void stream_underflow_cb(pa_stream* s, void* userdata)
-{
-   printf("underflow\n");
-}
-
-static void stream_overflow_cb(pa_stream* s, void* userdata)
-{
-   printf("overflow\n");
-}
-
-static void stream_success_cb(pa_stream* stream, int success, void* userdata)
-{
-   return;
 }
 
 

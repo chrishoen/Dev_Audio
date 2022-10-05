@@ -34,7 +34,7 @@ static constexpr double cDsp_TwoPi = 2.0 * cDsp_Pi;
 static double mTime = 0;
 static double mSampleFreq = 44100;
 static double mSamplePeriod = 1/mSampleFreq;
-static double mAudioFreq = 441;
+static double mAudioFreq = 500;
 
 void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
 {

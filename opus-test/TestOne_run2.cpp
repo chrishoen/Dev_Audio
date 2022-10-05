@@ -37,11 +37,9 @@ void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
    while (bytes_remaining > 0)
    {
       // Begin write.
-      short* buffer = NULL;
-      size_t bytes_to_fill = 44100;
       int retval = 0;
-
-      if (bytes_to_fill > bytes_remaining) bytes_to_fill = bytes_remaining;
+      short* buffer = NULL;
+      size_t bytes_to_fill = bytes_remaining;
 
       pa_stream_begin_write(stream, (void**)&buffer, &bytes_to_fill);
 

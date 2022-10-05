@@ -13,7 +13,7 @@ Description:
 
 static const char* cFilePath = "/opt/prime/single/kashmir1.opus";
 static short mBuffer[10000];
-OggOpusFile* mFile = 0;
+static OggOpusFile* mFile = 0;
 
 void doRun21()
 {

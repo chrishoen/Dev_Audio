@@ -10,6 +10,7 @@ Description:
 #include <stdio.h>
 #include <assert.h>
 #include <pulse/pulseaudio.h>
+#include <opus/opusfile.h>
 
 #define FORMAT PA_SAMPLE_U8
 #define RATE 44100
@@ -18,6 +19,10 @@ static void context_state_cb(pa_context* context, void* mainloop);
 static void stream_state_cb(pa_stream* s, void* mainloop);
 static void stream_success_cb(pa_stream* stream, int success, void* userdata);
 static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata);
+
+static const char* cFilePath = "/opt/prime/single/kashmir1.opus";
+static short mBuffer[10000];
+static OggOpusFile* mFile = 0;
 
 void context_state_cb(pa_context* context, void* mainloop)
 {
@@ -36,6 +41,7 @@ static double mSampleFreq = 44100;
 static double mSamplePeriod = 1/mSampleFreq;
 static double mAudioFreq = 441;
 
+int write_count = 0;
 void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
 {
    size_t bytes_remaining = requested_bytes;
@@ -51,17 +57,19 @@ void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
       pa_stream_begin_write(stream, (void**)&buffer, &bytes_to_fill);
 
       int nsamples = (int)bytes_to_fill / 2;
-      for (int i = 0; i < nsamples; i++)
+      int samples_read = op_read(mFile, buffer, nsamples, NULL);
+      if (samples_read < 0)
       {
-         buffer[i] = (short)(32000 * cos(cDsp_TwoPi * mAudioFreq * mTime));
-         mTime += mSamplePeriod;
+         printf("read error %d\n", samples_read);
+         return;
       }
+      //printf("read status %d\n", samples_read);
+      int bytes_read = samples_read * 2;
+      pa_stream_write(stream, buffer, bytes_read, NULL, 0LL, PA_SEEK_RELATIVE);
 
-      pa_stream_write(stream, buffer, bytes_to_fill, NULL, 0LL, PA_SEEK_RELATIVE);
+      bytes_remaining -= bytes_read;
 
-      bytes_remaining -= bytes_to_fill;
-
-      printf("stream_write_cb %d %d %d\n", (int)requested_bytes, (int)bytes_to_fill, (int)bytes_remaining);
+      printf("stream_write_cb %d %d %d %d\n", write_count++, (int)requested_bytes, (int)bytes_to_fill, (int)bytes_remaining);
    }
 }
 
@@ -77,6 +85,11 @@ static pa_stream* stream;
 
 void doRun3()
 {
+   printf("opening opus file\n");
+   int tError = 0;
+   mFile = op_open_file(cFilePath, &tError);
+   printf("open status %d\n", tError);
+
    int retval;
 
    // Get a mainloop and its context

@@ -59,7 +59,18 @@ void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
    }
 }
 
-void stream_success_cb(pa_stream* stream, int success, void* userdata) {
+static void stream_underflow_cb(pa_stream* s, void* userdata)
+{
+   printf("underflow\n");
+}
+
+static void stream_overflow_cb(pa_stream* s, void* userdata)
+{
+   printf("overflow\n");
+}
+
+static void stream_success_cb(pa_stream* stream, int success, void* userdata)
+{
    return;
 }
 
@@ -123,6 +134,8 @@ void doRun2()
    stream = pa_stream_new(context, "Playback", &sample_spec, NULL);
    pa_stream_set_state_callback(stream, stream_state_cb, mainloop);
    pa_stream_set_write_callback(stream, stream_write_cb, mainloop);
+   pa_stream_set_underflow_callback(stream, stream_underflow_cb, mainloop);
+   pa_stream_set_overflow_callback(stream, stream_overflow_cb, mainloop);
 
    // recommended settings, i.e. server uses sensible values
    pa_buffer_attr buffer_attr;

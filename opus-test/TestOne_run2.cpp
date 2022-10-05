@@ -52,7 +52,6 @@ void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
          printf("read error %d\n", samples_read);
          return;
       }
-      //printf("read status %d\n", samples_read);
       int bytes_read = samples_read * 2;
       pa_stream_write(stream, buffer, bytes_read, NULL, 0LL, PA_SEEK_RELATIVE);
 

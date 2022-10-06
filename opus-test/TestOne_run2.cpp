@@ -79,10 +79,10 @@ void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
 }
 
 
-static pa_threaded_mainloop* mainloop;
-static pa_mainloop_api* mainloop_api;
-static pa_context* context;
-static pa_stream* stream;
+static pa_threaded_mainloop* mainloop = 0;
+static pa_mainloop_api* mainloop_api = 0;
+static pa_context* context = 0;
+static pa_stream* stream = 0;
 
 void doRun2()
 {
@@ -177,9 +177,11 @@ void doRun2()
 
 void doStop2()
 {
+   if (mainloop == 0) return;
    printf("stopping\n");
    pa_threaded_mainloop_stop(mainloop);
    pa_stream_disconnect(stream);
    pa_context_disconnect(context);
    printf("stopped\n");
+   mainloop = 0;
 }

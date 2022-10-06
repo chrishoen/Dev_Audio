@@ -48,8 +48,18 @@ static void stream_success_cb(pa_stream* stream, int success, void* userdata)
 static int read_count = 0;
 static void stream_read_cb(pa_stream* stream, size_t nbytes, void* userdata)
 {
-   printf("stream_read_cb %d\n",
-      read_count++);
+   // Read.
+   int retval = 0;
+   const short* buffer = NULL;
+   size_t bytes_to_peek = 0;
+
+   pa_stream_peek(stream, (const void**)&buffer, &bytes_to_peek);
+
+
+   printf("stream_read_cb %d %d %d\n",
+      read_count++,
+      (int)nbytes,
+      (int)bytes_to_peek);
 }
 
 static pa_threaded_mainloop* mainloop = 0;

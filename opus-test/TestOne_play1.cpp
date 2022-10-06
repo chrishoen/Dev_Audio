@@ -146,7 +146,6 @@ void doPlay1(double aSkip)
 
    // Create a playback stream
    pa_sample_spec sample_spec;
-   sample_spec.rate = 44100;
    sample_spec.rate = 48000;
    sample_spec.channels = 1;
    sample_spec.format = PA_SAMPLE_S16LE;

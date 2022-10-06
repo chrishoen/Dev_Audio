@@ -74,6 +74,46 @@ static void stream_read_cb(pa_stream* stream, size_t nbytes, void* userdata)
       (int)nbytes,
       (int)bytes_to_peek);
 }
+#if 0
+bool BaseTcpStreamSocket::doSend(const char* aPayload, int aLength)
+{
+   if (mStatus < 0) return false;
+
+   int tStatus = 0;
+   if (aLength == 0) return true;
+
+   int bytesRequired = aLength;
+   int bytesRemaining = aLength;
+   int bytesTotal = 0;
+
+   bool going = true;
+   while (going)
+   {
+      tStatus = send(mBaseSpecific->mDesc, &aPayload[bytesTotal], bytesRemaining, 0);
+      if (tStatus > 0)
+      {
+         bytesTotal += tStatus;
+         bytesRemaining -= tStatus;
+         if (bytesTotal == bytesRequired)
+         {
+            going = false;
+            tStatus = bytesTotal;
+         }
+      }
+      else
+      {
+         going = false;
+      }
+   }
+
+   return updateError(tStatus);
+}
+#endif
+
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
 
 static pa_threaded_mainloop* mainloop = 0;
 static pa_mainloop_api* mainloop_api = 0;

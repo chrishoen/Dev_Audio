@@ -47,15 +47,26 @@ static void stream_success_cb(pa_stream* stream, int success, void* userdata)
 }
 
 static int read_count = 0;
+static const int write_buffer_byte_size = 2048;
+static char* write_buffer[write_buffer_byte_size];
+
 static void stream_read_cb(pa_stream* stream, size_t nbytes, void* userdata)
 {
    // Read.
    int retval = 0;
-   const short* buffer = NULL;
+   short* peek_sample_buffer = 0;
    size_t bytes_to_peek = 0;
 
-   pa_stream_peek(stream, (const void**)&buffer, &bytes_to_peek);
+   // Stream peek 
+   pa_stream_peek(stream, (const void**)&peek_sample_buffer, &bytes_to_peek);
    pa_stream_drop(stream);
+
+
+
+
+
+
+
 
 
    printf("stream_read_cb %d %d %d\n",

@@ -72,7 +72,7 @@ static pa_mainloop_api* mainloop_api = 0;
 static pa_context* context = 0;
 static pa_stream* stream = 0;
 
-void doRun1()
+void doSin1()
 {
    int retval;
 
@@ -156,7 +156,7 @@ void doRun1()
    printf("running\n");
 }
 
-void doStop1()
+void doStopSin1()
 {
    if (mainloop == 0) return;
    printf("stopping\n");

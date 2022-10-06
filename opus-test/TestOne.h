@@ -11,10 +11,10 @@
 //******************************************************************************
 //******************************************************************************
 
-void doRun1();
-void doStop1();
+void doSin1();
+void doStopSin1();
 
-void doRun2();
-void doStop2();
+void doPlay1();
+void doStopPlay1();
 
 void doShowInfo();

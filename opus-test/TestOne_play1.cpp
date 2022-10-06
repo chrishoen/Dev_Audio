@@ -84,7 +84,7 @@ static pa_mainloop_api* mainloop_api = 0;
 static pa_context* context = 0;
 static pa_stream* stream = 0;
 
-void doRun2()
+void doPlay1()
 {
    printf("opening opus file\n");
    int tError = 0;
@@ -176,7 +176,7 @@ void doRun2()
    printf("running\n");
 }
 
-void doStop2()
+void doStopPlay1()
 {
    if (mainloop == 0) return;
    printf("stopping\n");

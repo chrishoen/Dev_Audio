@@ -54,6 +54,7 @@ static void stream_read_cb(pa_stream* stream, size_t nbytes, void* userdata)
    size_t bytes_to_peek = 0;
 
    pa_stream_peek(stream, (const void**)&buffer, &bytes_to_peek);
+   pa_stream_drop(stream);
 
 
    printf("stream_read_cb %d %d %d\n",
@@ -120,10 +121,10 @@ void doRec1()
    // Create a playback stream
    pa_sample_spec sample_spec;
    sample_spec.rate = 48000;
-   sample_spec.channels = 1;
+   sample_spec.channels = 2;
    sample_spec.format = PA_SAMPLE_S16LE;
 
-   stream = pa_stream_new(context, "Playback", &sample_spec, NULL);
+   stream = pa_stream_new(context, "Record", &sample_spec, NULL);
    pa_stream_set_state_callback(stream, stream_state_cb, mainloop);
    pa_stream_set_read_callback(stream, stream_read_cb, mainloop);
    pa_stream_set_underflow_callback(stream, stream_underflow_cb, mainloop);
@@ -150,6 +151,7 @@ void doRec1()
       printf("pa_stream_connect_record %d\n", retval);
       return;
    }
+   printf("connected\n");
 
    // Wait for the stream to be ready
    while (1)

@@ -17,8 +17,9 @@ static void stream_state_cb(pa_stream* s, void* mainloop);
 static void stream_success_cb(pa_stream* stream, int success, void* userdata);
 static void stream_read_cb(pa_stream* stream, size_t requested_bytes, void* userdata);
 
-static const char* cFilePath = "/opt/prime/single/kashmir1.opus";
-static OggOpusFile* mFile = 0;
+static const char* cFilePath = "/opt/prime/single/record1.opus";
+FILE* mFile = 0;
+static struct OpusEncoder* mEncoder;
 
 static void context_state_cb(pa_context* context, void* mainloop)
 {
@@ -71,16 +72,20 @@ static pa_stream* stream = 0;
 void doRec1()
 {
    int retval;
+   int error;
 
    // Open opus file.
-   printf("opening opus file %s\n", cFilePath);
-   int tError = 0;
-   mFile = op_open_file(cFilePath, &tError);
-   if (tError)
+   printf("opening opus record file %s\n", cFilePath);
+   mFile = fopen(cFilePath, "wb");
+
+   // Opus encoder.
+   mEncoder = opus_encoder_create(48000, 1, OPUS_APPLICATION_AUDIO, &retval);
+   if (retval)
    {
-      printf("opus file FAIL %d\n", tError);
+      printf("opus_encoder_create FAIL %d\n", retval);
       return;
    }
+   printf("opus_encoder_create PASS\n");
 
    // Get a mainloop and its context
    mainloop = pa_threaded_mainloop_new();
@@ -121,7 +126,7 @@ void doRec1()
    // Create a playback stream
    pa_sample_spec sample_spec;
    sample_spec.rate = 48000;
-   sample_spec.channels = 2;
+   sample_spec.channels = 1;
    sample_spec.format = PA_SAMPLE_S16LE;
 
    stream = pa_stream_new(context, "Record", &sample_spec, NULL);
@@ -177,6 +182,7 @@ void doStopRec1()
    pa_threaded_mainloop_stop(mainloop);
    pa_stream_disconnect(stream);
    pa_context_disconnect(context);
+   opus_encoder_destroy(mEncoder);
    printf("stopped\n");
    mainloop = 0;
 }

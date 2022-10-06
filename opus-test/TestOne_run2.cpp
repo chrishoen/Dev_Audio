@@ -20,12 +20,12 @@ static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* use
 static const char* cFilePath = "/opt/prime/single/kashmir1.opus";
 static OggOpusFile* mFile = 0;
 
-void context_state_cb(pa_context* context, void* mainloop)
+static void context_state_cb(pa_context* context, void* mainloop)
 {
    pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
 }
 
-void stream_state_cb(pa_stream* s, void* mainloop)
+static void stream_state_cb(pa_stream* s, void* mainloop)
 {
    pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
 }
@@ -45,8 +45,8 @@ static void stream_success_cb(pa_stream* stream, int success, void* userdata)
    return;
 }
 
-int write_count = 0;
-void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
+static int write_count = 0;
+static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
 {
    size_t bytes_remaining = requested_bytes;
    while (bytes_remaining > 0)
@@ -132,6 +132,7 @@ void doRun2()
    // Create a playback stream
    pa_sample_spec sample_spec;
    sample_spec.rate = 44100;
+   sample_spec.rate = 48000;
    sample_spec.channels = 1;
    sample_spec.format = PA_SAMPLE_S16LE;
 

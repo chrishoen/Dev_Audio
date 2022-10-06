@@ -11,20 +11,17 @@ Description:
 #include <assert.h>
 #include <pulse/pulseaudio.h>
 
-#define FORMAT PA_SAMPLE_U8
-#define RATE 44100
-
 static void context_state_cb(pa_context* context, void* mainloop);
 static void stream_state_cb(pa_stream* s, void* mainloop);
 static void stream_success_cb(pa_stream* stream, int success, void* userdata);
 static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata);
 
-void context_state_cb(pa_context* context, void* mainloop)
+static void context_state_cb(pa_context* context, void* mainloop)
 {
    pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
 }
 
-void stream_state_cb(pa_stream* s, void* mainloop)
+static void stream_state_cb(pa_stream* s, void* mainloop)
 {
    pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
 }
@@ -32,11 +29,11 @@ void stream_state_cb(pa_stream* s, void* mainloop)
 static constexpr double cDsp_Pi = 3.14159265358979323846264338327950288419716939937510;
 static constexpr double cDsp_TwoPi = 2.0 * cDsp_Pi;
 static double mTime = 0;
-static double mSampleFreq = 44100;
+static double mSampleFreq = 48000;
 static double mSamplePeriod = 1/mSampleFreq;
 static double mAudioFreq = 500;
 
-void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
+static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
 {
    size_t bytes_remaining = requested_bytes;
    while (bytes_remaining > 0)
@@ -65,7 +62,7 @@ void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
    }
 }
 
-void stream_success_cb(pa_stream* stream, int success, void* userdata) {
+static void stream_success_cb(pa_stream* stream, int success, void* userdata) {
    return;
 }
 
@@ -117,7 +114,7 @@ void doRun1()
 
    // Create a playback stream
    pa_sample_spec sample_spec;
-   sample_spec.rate = 44100;
+   sample_spec.rate = 48000;
    sample_spec.channels = 1;
    sample_spec.format = PA_SAMPLE_S16LE;
 

@@ -15,7 +15,7 @@ Description:
 static void context_state_cb(pa_context* context, void* mainloop);
 static void stream_state_cb(pa_stream* s, void* mainloop);
 static void stream_success_cb(pa_stream* stream, int success, void* userdata);
-static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata);
+static void stream_read_cb(pa_stream* stream, size_t requested_bytes, void* userdata);
 
 static const char* cFilePath = "/opt/prime/single/kashmir1.opus";
 static OggOpusFile* mFile = 0;
@@ -45,39 +45,12 @@ static void stream_success_cb(pa_stream* stream, int success, void* userdata)
    return;
 }
 
-static int write_count = 0;
-static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
+static int read_count = 0;
+static void stream_read_cb(pa_stream* stream, size_t nbytes, void* userdata)
 {
-   size_t bytes_remaining = requested_bytes;
-   while (bytes_remaining > 0)
-   {
-      // Begin write.
-      int retval = 0;
-      short* buffer = NULL;
-      size_t bytes_to_fill = bytes_remaining;
-
-      pa_stream_begin_write(stream, (void**)&buffer, &bytes_to_fill);
-
-      int nsamples = (int)bytes_to_fill / 2;
-      int samples_read = op_read(mFile, buffer, nsamples, NULL);
-      if (samples_read < 0)
-      {
-         printf("read error %d\n", samples_read);
-         return;
-      }
-      int bytes_read = samples_read * 2;
-      pa_stream_write(stream, buffer, bytes_read, NULL, 0LL, PA_SEEK_RELATIVE);
-
-      bytes_remaining -= bytes_read;
-
-      printf("stream_write_cb %d %d %d %d\n",
-         write_count++,
-         (int)requested_bytes,
-         (int)bytes_to_fill,
-         (int)bytes_remaining);
-   }
+   printf("stream_read_cb %d\n",
+      read_count++);
 }
-
 
 static pa_threaded_mainloop* mainloop = 0;
 static pa_mainloop_api* mainloop_api = 0;
@@ -142,7 +115,7 @@ void doRec1()
 
    stream = pa_stream_new(context, "Playback", &sample_spec, NULL);
    pa_stream_set_state_callback(stream, stream_state_cb, mainloop);
-   pa_stream_set_write_callback(stream, stream_write_cb, mainloop);
+   pa_stream_set_read_callback(stream, stream_read_cb, mainloop);
    pa_stream_set_underflow_callback(stream, stream_underflow_cb, mainloop);
    pa_stream_set_overflow_callback(stream, stream_overflow_cb, mainloop);
 
@@ -161,7 +134,12 @@ void doRec1()
       PA_STREAM_ADJUST_LATENCY);
 
    // Connect stream to the default audio output sink
-   pa_stream_connect_playback(stream, NULL, &buffer_attr, stream_flags, NULL, NULL);
+   retval = pa_stream_connect_record(stream, NULL, &buffer_attr, stream_flags);
+   if (retval)
+   {
+      printf("pa_stream_connect_record %d\n", retval);
+      return;
+   }
 
    // Wait for the stream to be ready
    while (1)

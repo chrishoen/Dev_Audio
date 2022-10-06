@@ -84,14 +84,29 @@ static pa_mainloop_api* mainloop_api = 0;
 static pa_context* context = 0;
 static pa_stream* stream = 0;
 
-void doPlay1()
+void doPlay1(double aSkip)
 {
-   printf("opening opus file\n");
+   int retval;
+
+   // Open opus file.
+   printf("opening opus file %s\n", cFilePath);
    int tError = 0;
    mFile = op_open_file(cFilePath, &tError);
-   printf("open status %d\n", tError);
+   if (tError)
+   {
+      printf("opus file FAIL %d\n", tError);
+      return;
+   }
 
-   int retval;
+   // Seek opus file.
+   long long tSkip = aSkip * 48000;
+   printf("seeking opus file %lld\n", tSkip);
+   tError = op_pcm_seek(mFile, tSkip);
+   if (tError)
+   {
+      printf("opus seek FAIL %d\n", tError);
+      return;
+   }
 
    // Get a mainloop and its context
    mainloop = pa_threaded_mainloop_new();

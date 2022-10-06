@@ -46,7 +46,8 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
 
 void CmdLineExec::executePlay(Ris::CmdLineCmd* aCmd)
 {
-   doPlay1();
+   aCmd->setArgDefault(1, 0.0);
+   doPlay1(aCmd->argDouble(1));
 }
 
 //******************************************************************************

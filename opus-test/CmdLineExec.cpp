@@ -36,7 +36,8 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
 
    if (aCmd->isCmd("SIN"))   doSin1();
    if (aCmd->isCmd("PLAY"))  executePlay(aCmd);
-   if (aCmd->isCmd("REC"))   doRec1();
+   if (aCmd->isCmd("REC1"))  doRec1();
+   if (aCmd->isCmd("REC2"))  doRec2();
    if (aCmd->isCmd("INFO"))  doShowInfo();
    if (aCmd->isCmd("S"))     executeStop(aCmd);
 }
@@ -60,6 +61,7 @@ void CmdLineExec::executeStop(Ris::CmdLineCmd* aCmd)
    doStopSin1();
    doStopPlay1();
    doStopRec1();
+   doStopRec2();
 }
 
 //******************************************************************************

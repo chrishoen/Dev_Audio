@@ -11,13 +11,10 @@ include(MySpecial.cmake)
 project ("Dev_Audio")
 my_special1() 
 
-add_subdirectory ("opusenc_example")
-return()
-
-add_subdirectory ("opusenc_example")
-return()
-
 add_subdirectory ("opus-test")
+return()
+
+add_subdirectory ("opusenc_example")
 return()
 
 add_subdirectory ("audio-test")

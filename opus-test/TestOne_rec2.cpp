@@ -10,6 +10,7 @@ Description:
 #include <stdio.h>
 #include <assert.h>
 #include <pulse/pulseaudio.h>
+#include <opusenc.h>
 
 //******************************************************************************
 //******************************************************************************
@@ -49,9 +50,14 @@ static pa_mainloop_api* mainloop_api = 0;
 static pa_context* context = 0;
 static pa_stream* stream = 0;
 
-static const char* cFilePath = "/opt/prime/tmp/record.raw";
-FILE* mFile = 0;
+static const char* cFilePath = "/opt/prime/tmp/record1.opus";
+static struct OggOpusEnc* mEncoder;
+static struct OggOpusComments* mComments;
+
 static int read_count = 0;
+static const int frame_size = 240;
+static short frame_buffer[1000];
+static unsigned char write_buffer[1000];
 
 static void stream_read_cb(pa_stream* stream, size_t nbytes, void* userdata)
 {
@@ -59,31 +65,49 @@ static void stream_read_cb(pa_stream* stream, size_t nbytes, void* userdata)
    int retval = 0;
    short* peek_sample_buffer = 0;
    size_t bytes_to_peek = 0;
+   int tTotalWriteBytes = 0;
 
    // Stream peek. 
    pa_stream_peek(stream, (const void**)&peek_sample_buffer, &bytes_to_peek);
    pa_stream_drop(stream);
    int samples_to_peek = bytes_to_peek / 2;
 
-   // Write the samples to the raw file.
-   fwrite(peek_sample_buffer, 2, samples_to_peek , mFile);
+   // Write to encoder file.
+   ope_encoder_write(mEncoder, peek_sample_buffer, samples_to_peek);
+
    printf("stream_read_cb %d %d\n",
       read_count++,
-      samples_to_peek);
+      (int)samples_to_peek);
 }
 
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
 
-void doRec1()
+void doRec2()
 {
-   int retval;
-   int error;
+   int retval = 0;
 
-   // Open raw file.
-   printf("opening raw record file %s\n", cFilePath);
-   mFile = fopen(cFilePath, "wb");
+   // Open opus file.
+   printf("opening opus record file %s\n", cFilePath);
+   // Opus comments.
+   mComments = ope_comments_create();
+   ope_comments_add(mComments, "ARTIST", "steno");
+   ope_comments_add(mComments, "TITLE", "talking");
+   // Opus encoder.
+   mEncoder = ope_encoder_create_file(cFilePath, mComments, 44100, 1, 0, &retval);
+   if (!mEncoder)
+   {
+      fprintf(stderr, "error encoding to file %s: %s\n", cFilePath, ope_strerror(retval));
+      ope_comments_destroy(mComments);
+      return;
+   }
+   if (retval)
+   {
+      printf("opus_encoder_create FAIL %d\n", retval);
+      return;
+   }
+   printf("opus_encoder_create PASS\n");
 
    // Get a mainloop and its context
    mainloop = pa_threaded_mainloop_new();
@@ -173,7 +197,7 @@ void doRec1()
    printf("running\n");
 }
 
-void doStopRec1()
+void doStopRec2()
 {
    if (mainloop == 0) return;
    printf("stopping\n");
@@ -181,7 +205,9 @@ void doStopRec1()
    pa_stream_disconnect(stream);
    pa_context_disconnect(context);
 
-   fclose(mFile);
+   ope_encoder_drain(mEncoder);
+   ope_encoder_destroy(mEncoder);
+   ope_comments_destroy(mComments);
 
    printf("stopped\n");
    mainloop = 0;

@@ -20,4 +20,7 @@ void doStopPlay1();
 void doRec1();
 void doStopRec1();
 
+void doRec2();
+void doStopRec2();
+
 void doShowInfo();

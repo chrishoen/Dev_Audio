@@ -11,52 +11,17 @@ include(MySpecial.cmake)
 project ("Dev_Audio")
 my_special1() 
 
+add_subdirectory ("opusenc_example")
+return()
+
+add_subdirectory ("opusenc_example")
+return()
+
 add_subdirectory ("opus-test")
 return()
 
 add_subdirectory ("audio-test")
 add_subdirectory ("Test")
 return()
-
-add_subdirectory ("CCLib")
-add_subdirectory ("ShareLib")
-add_subdirectory ("RingWriter")
-add_subdirectory ("RingReader1")
-add_subdirectory ("RingReader2")
-return()
-
-add_subdirectory ("Counter")
-return()
-
-add_subdirectory ("CCLib")
-add_subdirectory ("ShareLib")
-add_subdirectory ("RingWriter")
-add_subdirectory ("RingReader2")
-return()
-
-add_subdirectory ("Modulo")
-return()
-
-add_subdirectory ("CCLib")
-add_subdirectory ("Concurrent")
-add_subdirectory ("Test")
-return()
-
-add_subdirectory ("CCLib")
-add_subdirectory ("ShareLib")
-add_subdirectory ("RingWriter")
-add_subdirectory ("RingReader")
-return()
-
-add_subdirectory ("CCLib")
-add_subdirectory ("Concurrent")
-add_subdirectory ("Test")
-return()
-
-add_subdirectory ("CCLib")
-add_subdirectory ("Concurrent")
-add_subdirectory ("LockFree")
-add_subdirectory ("MyBlock")
-add_subdirectory ("Test")
 
 

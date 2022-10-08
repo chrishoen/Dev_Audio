@@ -12,14 +12,11 @@ Description:
 #include <pulse/pulseaudio.h>
 #include <opus/opusfile.h>
 
-static void context_state_cb(pa_context* context, void* mainloop);
-static void stream_state_cb(pa_stream* s, void* mainloop);
-static void stream_success_cb(pa_stream* stream, int success, void* userdata);
-static void stream_read_cb(pa_stream* stream, size_t requested_bytes, void* userdata);
+#include "ccRingBufferEx.h"
 
-static const char* cFilePath = "/opt/prime/single/record1.opus";
-FILE* mFile = 0;
-static struct OpusEncoder* mEncoder;
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
 
 static void context_state_cb(pa_context* context, void* mainloop)
 {
@@ -46,71 +43,6 @@ static void stream_success_cb(pa_stream* stream, int success, void* userdata)
    return;
 }
 
-static int read_count = 0;
-static const int write_buffer_byte_size = 2048;
-static char* write_buffer[write_buffer_byte_size];
-
-static void stream_read_cb(pa_stream* stream, size_t nbytes, void* userdata)
-{
-   // Read.
-   int retval = 0;
-   short* peek_sample_buffer = 0;
-   size_t bytes_to_peek = 0;
-
-   // Stream peek 
-   pa_stream_peek(stream, (const void**)&peek_sample_buffer, &bytes_to_peek);
-   pa_stream_drop(stream);
-
-
-
-
-
-
-
-
-
-   printf("stream_read_cb %d %d %d\n",
-      read_count++,
-      (int)nbytes,
-      (int)bytes_to_peek);
-}
-#if 0
-bool BaseTcpStreamSocket::doSend(const char* aPayload, int aLength)
-{
-   if (mStatus < 0) return false;
-
-   int tStatus = 0;
-   if (aLength == 0) return true;
-
-   int bytesRequired = aLength;
-   int bytesRemaining = aLength;
-   int bytesTotal = 0;
-
-   bool going = true;
-   while (going)
-   {
-      tStatus = send(mBaseSpecific->mDesc, &aPayload[bytesTotal], bytesRemaining, 0);
-      if (tStatus > 0)
-      {
-         bytesTotal += tStatus;
-         bytesRemaining -= tStatus;
-         if (bytesTotal == bytesRequired)
-         {
-            going = false;
-            tStatus = bytesTotal;
-         }
-      }
-      else
-      {
-         going = false;
-      }
-   }
-
-   return updateError(tStatus);
-}
-#endif
-
-
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
@@ -120,10 +52,71 @@ static pa_mainloop_api* mainloop_api = 0;
 static pa_context* context = 0;
 static pa_stream* stream = 0;
 
+static const char* cFilePath = "/opt/prime/single/record1.opus";
+FILE* mFile = 0;
+static struct OpusEncoder* mEncoder;
+
+static int read_count = 0;
+static const int frame_size = 240;
+static short frame_buffer[1000];
+static unsigned char write_buffer[1000];
+
+CC::MemoryRingBuffer<short, 10000, 0> mRingBuffer;
+CC::RingBufferWriter mRingWriter;
+CC::RingBufferReader mRingReader;
+
+static void stream_read_cb(pa_stream* stream, size_t nbytes, void* userdata)
+{
+   // Read.
+   int retval = 0;
+   short* peek_sample_buffer = 0;
+   size_t bytes_to_peek = 0;
+   int tTotalWriteBytes = 0;
+
+   // Stream peek. 
+   pa_stream_peek(stream, (const void**)&peek_sample_buffer, &bytes_to_peek);
+   pa_stream_drop(stream);
+   int samples_to_peek = bytes_to_peek / 2;
+
+   // Write the samples to the ring buffer.
+   mRingWriter.doWriteArray(peek_sample_buffer, samples_to_peek);
+
+   while (true)
+   {
+      // If there is less than a frame in the ring buffer then exit the loop.
+      if (mRingReader.available() < frame_size) break;
+
+      // Read a frame from the ring buffer.
+      mRingReader.doReadArray(frame_buffer, frame_size);
+
+      // Encode the frame.
+      int tBytesToWrite = opus_encode(mEncoder, frame_buffer, frame_size, write_buffer, 1000);
+      fwrite(write_buffer, (size_t)tBytesToWrite, 1, mFile);
+      tTotalWriteBytes += tBytesToWrite;
+   }
+
+   printf("stream_read_cb %d %d %d %d\n",
+      read_count++,
+      (int)bytes_to_peek,
+      tTotalWriteBytes);
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
 void doRec1()
 {
    int retval;
    int error;
+
+   // Initialize ring buffer.
+   mRingBuffer.initialize();
+   mRingWriter.initialize(&mRingBuffer, &mRingBuffer.mElementArrayMemory);
+   mRingReader.initialize(&mRingBuffer, &mRingBuffer.mElementArrayMemory);
+   short tDummy = -99;
+   mRingWriter.doWrite(&tDummy);
+   mRingReader.doRead(&tDummy);
 
    // Open opus file.
    printf("opening opus record file %s\n", cFilePath);
@@ -234,6 +227,7 @@ void doStopRec1()
    pa_stream_disconnect(stream);
    pa_context_disconnect(context);
    opus_encoder_destroy(mEncoder);
+   fclose(mFile);
    printf("stopped\n");
    mainloop = 0;
 }

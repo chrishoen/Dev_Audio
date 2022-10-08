@@ -53,23 +53,34 @@ static const char* cFilePath = "/opt/prime/tmp/record.raw";
 FILE* mFile = 0;
 static int read_count = 0;
 
-static void stream_read_cb(pa_stream* stream, size_t nbytes, void* userdata)
+static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
 {
-   // Read.
-   int retval = 0;
-   short* peek_sample_buffer = 0;
-   size_t bytes_to_peek = 0;
+   int total_samples = 0;
+   int count = 0;
+   while (pa_stream_readable_size(stream) > 0)
+   {
+      // Read.
+      int retval = 0;
+      short* peek_sample_buffer = 0;
+      size_t bytes_to_peek = length;
 
-   // Stream peek. 
-   pa_stream_peek(stream, (const void**)&peek_sample_buffer, &bytes_to_peek);
-   pa_stream_drop(stream);
-   int samples_to_peek = bytes_to_peek / 2;
+      // Stream peek. 
+      pa_stream_peek(stream, (const void**)&peek_sample_buffer, &bytes_to_peek);
+      int samples_to_peek = bytes_to_peek / 2;
+      total_samples += samples_to_peek;
 
-   // Write the samples to the raw file.
-   fwrite(peek_sample_buffer, 2, samples_to_peek , mFile);
-   printf("stream_read_cb %d %d\n",
+      // Write the samples to the raw file.
+      fwrite(peek_sample_buffer, 2, samples_to_peek, mFile);
+
+      // Stream drop.
+      pa_stream_drop(stream);
+      count++;
+   }
+
+   printf("stream_read_cb %d %d %d\n",
       read_count++,
-      samples_to_peek);
+      total_samples,
+      count);
 }
 
 //******************************************************************************

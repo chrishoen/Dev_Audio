@@ -51,6 +51,7 @@ static pa_context* context = 0;
 static pa_stream* stream = 0;
 
 static const char* cFilePath = "/opt/prime/tmp/record.raw";
+static const char* cDeviceName = "alsa_input.usb-JOUNIVO_JOUNIVO_JV601_20180508-00.analog-stereo";
 FILE* mFile = 0;
 static int read_count = 0;
 
@@ -78,7 +79,7 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
       if (tValue > tMax) tMax = tValue;
    }
    // Write the samples to the raw file.
-   fwrite(peek_sample_buffer, 2, samples_to_peek, mFile);
+   //fwrite(peek_sample_buffer, 2, samples_to_peek, mFile);
 
    // Stream drop.
    pa_stream_drop(stream);
@@ -140,8 +141,8 @@ void doRec1()
 
    // Create a playback stream
    pa_sample_spec sample_spec;
-   sample_spec.rate = 48000;
-   sample_spec.channels = 1;
+   sample_spec.rate = 44100;
+   sample_spec.channels = 2;
    sample_spec.format = PA_SAMPLE_S16LE;
 
    stream = pa_stream_new(context, "Record", &sample_spec, NULL);
@@ -167,6 +168,7 @@ void doRec1()
    stream_flags = (pa_stream_flags_t)0;
    // Connect stream to the default audio output sink
 // retval = pa_stream_connect_record(stream, NULL, &buffer_attr, stream_flags);
+// retval = pa_stream_connect_record(stream, cDeviceName, NULL, stream_flags);
    retval = pa_stream_connect_record(stream, NULL, NULL, stream_flags);
    if (retval)
    {

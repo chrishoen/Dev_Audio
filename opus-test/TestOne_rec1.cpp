@@ -70,7 +70,7 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
    pa_stream_peek(stream, (const void**)&peek_sample_buffer, &bytes_to_peek);
    int samples_to_peek = bytes_to_peek / 2;
    total_samples += samples_to_peek;
-
+   // Metrics.
    for (int i = 0; i < samples_to_peek; i++)
    {
       short tValue = peek_sample_buffer[i];

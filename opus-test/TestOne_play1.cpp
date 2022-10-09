@@ -55,6 +55,8 @@ static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* use
       int retval = 0;
       short* buffer = NULL;
       size_t bytes_to_fill = bytes_remaining;
+      int tMin = 0;
+      int tMax = 0;
 
       pa_stream_begin_write(stream, (void**)&buffer, &bytes_to_fill);
 
@@ -66,15 +68,23 @@ static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* use
          return;
       }
       int bytes_read = samples_read * 2;
+      // Metrics.
+      for (int i = 0; i < samples_read; i++)
+      {
+         short tValue = buffer[i];
+         if (tValue < tMin) tMin = tValue;
+         if (tValue > tMax) tMax = tValue;
+      }
       pa_stream_write(stream, buffer, bytes_read, NULL, 0LL, PA_SEEK_RELATIVE);
 
       bytes_remaining -= bytes_read;
 
-      printf("stream_write_cb %d %d %d %d\n",
+      printf("stream_write_cb %d %d %d %d $ %d %d\n",
          write_count++,
          (int)requested_bytes,
          (int)bytes_to_fill,
-         (int)bytes_remaining);
+         (int)bytes_remaining,
+         tMin,tMax);
    }
 }
 

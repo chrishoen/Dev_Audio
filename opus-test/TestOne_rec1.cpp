@@ -58,30 +58,35 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
 {
    int total_samples = 0;
    int count = 0;
-   while (pa_stream_readable_size(stream) > 0)
+
+   // Read.
+   int retval = 0;
+   short* peek_sample_buffer = 0;
+   size_t bytes_to_peek = length;
+   int tMin = 0;
+   int tMax = 0;
+
+   // Stream peek. 
+   pa_stream_peek(stream, (const void**)&peek_sample_buffer, &bytes_to_peek);
+   int samples_to_peek = bytes_to_peek / 2;
+   total_samples += samples_to_peek;
+
+   for (int i = 0; i < samples_to_peek; i++)
    {
-      // Read.
-      int retval = 0;
-      short* peek_sample_buffer = 0;
-      size_t bytes_to_peek = length;
-
-      // Stream peek. 
-      pa_stream_peek(stream, (const void**)&peek_sample_buffer, &bytes_to_peek);
-      int samples_to_peek = bytes_to_peek / 2;
-      total_samples += samples_to_peek;
-
-      // Write the samples to the raw file.
-      fwrite(peek_sample_buffer, 2, samples_to_peek, mFile);
-
-      // Stream drop.
-      pa_stream_drop(stream);
-      count++;
+      short tValue = peek_sample_buffer[i];
+      if (tValue < tMin) tMin = tValue;
+      if (tValue > tMax) tMax = tValue;
    }
+   // Write the samples to the raw file.
+   fwrite(peek_sample_buffer, 2, samples_to_peek, mFile);
 
-   printf("stream_read_cb %d %d %d\n",
+   // Stream drop.
+   pa_stream_drop(stream);
+
+   printf("stream_read_cb %d %d $ %4d %4d\n",
       read_count++,
       total_samples,
-      count);
+      tMin, tMax);
 }
 
 //******************************************************************************

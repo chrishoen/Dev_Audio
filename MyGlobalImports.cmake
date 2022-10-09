@@ -33,6 +33,7 @@ function(my_lib_import_Audio _target)
    target_link_libraries(${_target} opusenc)
    target_link_libraries(${_target} opusfile)
    target_link_libraries(${_target} opus)
+   target_link_libraries(${_target} sndfile)
    target_link_libraries(${_target} m)
 
 endfunction()

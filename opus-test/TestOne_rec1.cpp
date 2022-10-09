@@ -78,7 +78,7 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
       if (tValue > tMax) tMax = tValue;
    }
    // Write the samples to the raw file.
-   //fwrite(peek_sample_buffer, 2, samples_to_peek, mFile);
+   fwrite(peek_sample_buffer, 2, samples_to_peek, mFile);
 
    // Stream drop.
    pa_stream_drop(stream);
@@ -151,21 +151,23 @@ void doRec1()
    pa_stream_set_overflow_callback(stream, stream_overflow_cb, mainloop);
 
    // recommended settings, i.e. server uses sensible values
+#if 0
    pa_buffer_attr buffer_attr;
    buffer_attr.maxlength = (uint32_t)-1;
    buffer_attr.tlength = (uint32_t)-1;
    buffer_attr.prebuf = (uint32_t)-1;
    buffer_attr.minreq = (uint32_t)-1;
-
+#endif
    // Settings copied as per the chromium browser source
    pa_stream_flags_t stream_flags;
    stream_flags = (pa_stream_flags_t)(
       PA_STREAM_START_CORKED | PA_STREAM_INTERPOLATE_TIMING |
       PA_STREAM_NOT_MONOTONIC | PA_STREAM_AUTO_TIMING_UPDATE |
       PA_STREAM_ADJUST_LATENCY);
-
+   stream_flags = (pa_stream_flags_t)0;
    // Connect stream to the default audio output sink
-   retval = pa_stream_connect_record(stream, NULL, &buffer_attr, stream_flags);
+// retval = pa_stream_connect_record(stream, NULL, &buffer_attr, stream_flags);
+   retval = pa_stream_connect_record(stream, NULL, NULL, stream_flags);
    if (retval)
    {
       printf("pa_stream_connect_record %d\n", retval);
@@ -185,7 +187,7 @@ void doRec1()
    pa_threaded_mainloop_unlock(mainloop);
 
    // Uncork the stream so it will start playing
-   pa_stream_cork(stream, 0, stream_success_cb, mainloop);
+   //pa_stream_cork(stream, 0, stream_success_cb, mainloop);
 
    printf("running\n");
 }

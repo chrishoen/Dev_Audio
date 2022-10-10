@@ -58,6 +58,8 @@ static const char* cFilePath = "/opt/prime/tmp/record.raw";
 static const char* cDeviceName = "alsa_input.usb-JOUNIVO_JOUNIVO_JV601_20180508-00.analog-stereo";
 FILE* mFile = 0;
 static int read_count = 0;
+static bool mShowFlag = false;
+static bool mWriteFlag = false;
 
 //******************************************************************************
 //******************************************************************************
@@ -87,15 +89,21 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
       if (tValue > tMax) tMax = tValue;
    }
    // Write the samples to the raw file.
-   fwrite(peek_sample_buffer, 2, samples_to_peek, mFile);
+   if (mWriteFlag)
+   {
+      fwrite(peek_sample_buffer, 2, samples_to_peek, mFile);
+   }
 
    // Stream drop.
    pa_stream_drop(stream);
 
-   printf("stream_read_cb %d %d $ %4d %4d\n",
-      read_count++,
-      total_samples,
-      tMin, tMax);
+   if (mShowFlag)
+   {
+      printf("stream_read_cb %d %d $ %4d %4d\n",
+         read_count++,
+         total_samples,
+         tMin, tMax);
+   }
 }
 
 //******************************************************************************
@@ -227,7 +235,7 @@ static void context_state_cb(pa_context* c, void* userdata)
 //******************************************************************************
 //******************************************************************************
 
-void doRec1()
+void doRec1(bool aShowFlag)
 {
    int retval;
    int error;
@@ -237,6 +245,7 @@ void doRec1()
    mFile = fopen(cFilePath, "wb");
 
    // Get a mainloop and its context
+   mShowFlag = aShowFlag;
    mainloop = pa_threaded_mainloop_new();
    mainloop_api = pa_threaded_mainloop_get_api(mainloop);
    context = pa_context_new(mainloop_api, "pcm-playback");

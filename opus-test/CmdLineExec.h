@@ -22,6 +22,7 @@ public:
    void executeGo5(Ris::CmdLineCmd* aCmd);
 
    void executePlay(Ris::CmdLineCmd* aCmd);
+   void executeRec1(Ris::CmdLineCmd* aCmd);
    void executeStop(Ris::CmdLineCmd* aCmd);
 
    void executeParms (Ris::CmdLineCmd* aCmd);

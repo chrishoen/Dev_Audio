@@ -61,11 +61,12 @@ static pa_context* context = 0;
 static pa_stream* stream = 0;
 
 static const char* cFilePath = "/opt/prime/tmp/record.raw";
-static const char* cDeviceName = "alsa_input.usb-JOUNIVO_JOUNIVO_JV601_20180508-00.analog-stereo";
+static const char* cDeviceName = "alsa_input.usb-046d_HD_Pro_Webcam_C920_51F943AF-02.analog-stereo";
+//static const char* cDeviceName = "alsa_input.hw_0_0";
 FILE* mFile = 0;
 static int read_count = 0;
 static bool mShowFlag = false;
-static bool mWriteFlag = false;
+static bool mWriteFlag = true;
 
 //******************************************************************************
 //******************************************************************************
@@ -185,7 +186,7 @@ static void context_state_cb(pa_context* c, void* userdata)
       // Create a stream
       pa_sample_spec sample_spec;
       sample_spec.rate = 32000;
-      sample_spec.channels = 2;
+      sample_spec.channels = 1;
       sample_spec.format = PA_SAMPLE_S16LE;
       stream = pa_stream_new(context, "Record", &sample_spec, NULL);
       printf("pa_stream_new PASS\n");
@@ -318,6 +319,10 @@ void doRec1(bool aShowFlag)
    printf("running\n");
 }
 
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
 void doStopRec1()
 {
    if (mainloop == 0) return;
@@ -341,4 +346,35 @@ void doStopRec1()
 
    printf("stopped\n");
    mainloop = 0;
+   context = 0;
+   stream = 0;
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
+void doShowRec1()
+{
+   if (!mainloop) return;
+   printf("show*****************************************begin\n");
+   pa_threaded_mainloop_lock(mainloop);
+
+   switch (pa_stream_get_state(stream))
+   {
+   case PA_STREAM_READY:
+      printf("stream ready\n");
+      break;
+   default:
+      printf("stream not ready\n");
+      break;
+   }
+
+   printf("Connected to device %s (%u, %ssuspended).\n",
+      pa_stream_get_device_name(stream),
+      pa_stream_get_device_index(stream),
+      pa_stream_is_suspended(stream) ? "" : "not ");
+
+   pa_threaded_mainloop_unlock(mainloop);
+   printf("show*****************************************end\n");
 }

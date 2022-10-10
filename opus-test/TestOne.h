@@ -19,6 +19,7 @@ void doStopPlay1();
 
 void doRec1(bool aShowFlag);
 void doStopRec1();
+void doShowRec1();
 
 void doRec2();
 void doStopRec2();

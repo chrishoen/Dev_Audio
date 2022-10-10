@@ -39,6 +39,7 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
    if (aCmd->isCmd("REC1"))  executeRec1(aCmd);
    if (aCmd->isCmd("REC2"))  doRec2();
    if (aCmd->isCmd("INFO"))  doShowInfo();
+   if (aCmd->isCmd("SHOW"))  executeShow(aCmd);
    if (aCmd->isCmd("S"))     executeStop(aCmd);
 }
 
@@ -72,6 +73,15 @@ void CmdLineExec::executeStop(Ris::CmdLineCmd* aCmd)
    doStopPlay1();
    doStopRec1();
    doStopRec2();
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
+void CmdLineExec::executeShow(Ris::CmdLineCmd* aCmd)
+{
+   doShowRec1();
 }
 
 //******************************************************************************

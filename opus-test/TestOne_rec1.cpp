@@ -87,11 +87,10 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
       if (tValue > tMax) tMax = tValue;
    }
    // Write the samples to the raw file.
-   //fwrite(peek_sample_buffer, 2, samples_to_peek, mFile);
+   fwrite(peek_sample_buffer, 2, samples_to_peek, mFile);
 
    // Stream drop.
    pa_stream_drop(stream);
-   return;
 
    printf("stream_read_cb %d %d $ %4d %4d\n",
       read_count++,

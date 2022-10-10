@@ -44,6 +44,12 @@ static void stream_buffer_attr_cb(pa_stream* stream, void* userdata)
 {
    printf("stream_buffer_attr_cb\n");
 }
+static void stream_success_cb(pa_stream* stream, int success, void* userdata)
+{
+   printf("stream_success_cb %d\n", success);
+   return;
+}
+
 
 //******************************************************************************
 //******************************************************************************
@@ -179,7 +185,7 @@ static void context_state_cb(pa_context* c, void* userdata)
       // Create a stream
       pa_sample_spec sample_spec;
       sample_spec.rate = 32000;
-      sample_spec.channels = 1;
+      sample_spec.channels = 2;
       sample_spec.format = PA_SAMPLE_S16LE;
       stream = pa_stream_new(context, "Record", &sample_spec, NULL);
       printf("pa_stream_new PASS\n");
@@ -307,7 +313,7 @@ void doRec1(bool aShowFlag)
    pa_threaded_mainloop_unlock(mainloop);
 
    // Uncork the stream so it will start playing
-   //pa_stream_cork(stream, 0, stream_success_cb, mainloop);
+   pa_stream_cork(stream, 0, stream_success_cb, mainloop);
 
    printf("running\n");
 }

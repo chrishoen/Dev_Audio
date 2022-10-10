@@ -103,7 +103,7 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
 //******************************************************************************
 //******************************************************************************
 
-static void stream_state_cb(pa_stream* s, void* mainloop)
+static void stream_state_cb(pa_stream* s, void* userdata)
 {
    switch (pa_stream_get_state(s))
    {
@@ -138,7 +138,7 @@ static void stream_state_cb(pa_stream* s, void* mainloop)
          pa_stream_is_suspended(s) ? "" : "not ");
 
       printf("stream_state_cb ready done\n");
-      //pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
+      pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
       break;
 
    case PA_STREAM_FAILED:
@@ -275,15 +275,15 @@ void doRec1()
       printf("context ready loop end\n");
    }
 
-//   pa_threaded_mainloop_lock(mainloop);
-
    // Wait for the stream to be ready
    while (1)
    {
       printf("stream ready loop begin\n");
       if (stream)
       {
+         pa_threaded_mainloop_lock(mainloop);
          pa_stream_state_t stream_state = pa_stream_get_state(stream);
+         pa_threaded_mainloop_unlock(mainloop);
          assert(PA_STREAM_IS_GOOD(stream_state));
          if (stream_state == PA_STREAM_READY)
          {

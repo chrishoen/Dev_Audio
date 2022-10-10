@@ -49,55 +49,6 @@ static void stream_buffer_attr_cb(pa_stream* stream, void* userdata)
 //******************************************************************************
 //******************************************************************************
 
-static void stream_state_cb(pa_stream* s, void* mainloop)
-{
-   switch (pa_stream_get_state(s))
-   {
-   case PA_STREAM_CREATING:
-      printf("stream_state_cb creating\n");
-      break;
-   case PA_STREAM_TERMINATED:
-      printf("stream_state_cb terminated\n");
-      break;
-
-   case PA_STREAM_READY:
-      printf("stream_state_cb ready\n");
-      const pa_buffer_attr* a;
-      char cmt[PA_CHANNEL_MAP_SNPRINT_MAX], sst[PA_SAMPLE_SPEC_SNPRINT_MAX];
-
-      if (!(a = pa_stream_get_buffer_attr(s)))
-      {
-         printf("pa_stream_get_buffer_attr failed: %s\n", pa_strerror(pa_context_errno(pa_stream_get_context(s))));
-      }
-      else
-      {
-         printf("Buffer metrics: maxlength=%u, fragsize=%u\n", a->maxlength, a->fragsize);
-      }
-
-      printf("Using sample spec '%s', channel map '%s'.\n",
-         pa_sample_spec_snprint(sst, sizeof(sst), pa_stream_get_sample_spec(s)),
-         pa_channel_map_snprint(cmt, sizeof(cmt), pa_stream_get_channel_map(s)));
-
-      printf("Connected to device %s (%u, %ssuspended).\n",
-         pa_stream_get_device_name(s),
-         pa_stream_get_device_index(s),
-         pa_stream_is_suspended(s) ? "" : "not ");
-
-      printf("stream_state_cb ready done\n");
-      //pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
-      break;
-
-   case PA_STREAM_FAILED:
-   default:
-      printf("Stream error: %s\n", pa_strerror(pa_context_errno(pa_stream_get_context(s))));
-      break;
-   }
-}
-
-//******************************************************************************
-//******************************************************************************
-//******************************************************************************
-
 static pa_threaded_mainloop* mainloop = 0;
 static pa_mainloop_api* mainloop_api = 0;
 static pa_context* context = 0;
@@ -146,6 +97,55 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
       read_count++,
       total_samples,
       tMin, tMax);
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
+static void stream_state_cb(pa_stream* s, void* mainloop)
+{
+   switch (pa_stream_get_state(s))
+   {
+   case PA_STREAM_CREATING:
+      printf("stream_state_cb creating\n");
+      break;
+   case PA_STREAM_TERMINATED:
+      printf("stream_state_cb terminated\n");
+      break;
+
+   case PA_STREAM_READY:
+      printf("stream_state_cb ready\n");
+      const pa_buffer_attr* a;
+      char cmt[PA_CHANNEL_MAP_SNPRINT_MAX], sst[PA_SAMPLE_SPEC_SNPRINT_MAX];
+
+      if (!(a = pa_stream_get_buffer_attr(s)))
+      {
+         printf("pa_stream_get_buffer_attr failed: %s\n", pa_strerror(pa_context_errno(pa_stream_get_context(s))));
+      }
+      else
+      {
+         printf("Buffer metrics: maxlength=%u, fragsize=%u\n", a->maxlength, a->fragsize);
+      }
+
+      printf("Using sample spec '%s', channel map '%s'.\n",
+         pa_sample_spec_snprint(sst, sizeof(sst), pa_stream_get_sample_spec(s)),
+         pa_channel_map_snprint(cmt, sizeof(cmt), pa_stream_get_channel_map(s)));
+
+      printf("Connected to device %s (%u, %ssuspended).\n",
+         pa_stream_get_device_name(s),
+         pa_stream_get_device_index(s),
+         pa_stream_is_suspended(s) ? "" : "not ");
+
+      printf("stream_state_cb ready done\n");
+      //pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
+      break;
+
+   case PA_STREAM_FAILED:
+   default:
+      printf("Stream error: %s\n", pa_strerror(pa_context_errno(pa_stream_get_context(s))));
+      break;
+   }
 }
 
 //******************************************************************************

@@ -21,7 +21,11 @@ void doRec1(bool aShowFlag);
 void doStopRec1();
 void doShowRec1();
 
-void doRec2();
+void doRec2(bool aShowFlag);
 void doStopRec2();
+void doShowRec2();
+
+void doRec3();
+void doStopRec3();
 
 void doShowInfo();

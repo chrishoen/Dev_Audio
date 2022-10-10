@@ -37,7 +37,8 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
    if (aCmd->isCmd("SIN"))   doSin1();
    if (aCmd->isCmd("PLAY"))  executePlay(aCmd);
    if (aCmd->isCmd("REC1"))  executeRec1(aCmd);
-   if (aCmd->isCmd("REC2"))  doRec2();
+   if (aCmd->isCmd("REC2"))  executeRec2(aCmd);
+   if (aCmd->isCmd("REC3"))  doRec3();
    if (aCmd->isCmd("INFO"))  doShowInfo();
    if (aCmd->isCmd("SHOW"))  executeShow(aCmd);
    if (aCmd->isCmd("S"))     executeStop(aCmd);
@@ -67,6 +68,16 @@ void CmdLineExec::executeRec1(Ris::CmdLineCmd* aCmd)
 //******************************************************************************
 //******************************************************************************
 
+void CmdLineExec::executeRec2(Ris::CmdLineCmd* aCmd)
+{
+   aCmd->setArgDefault(1, true);
+   doRec2(aCmd->argBool(1));
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
 void CmdLineExec::executeStop(Ris::CmdLineCmd* aCmd)
 {
    doStopSin1();
@@ -81,7 +92,12 @@ void CmdLineExec::executeStop(Ris::CmdLineCmd* aCmd)
 
 void CmdLineExec::executeShow(Ris::CmdLineCmd* aCmd)
 {
-   doShowRec1();
+   aCmd->setArgDefault(1, 2);
+   switch (aCmd->argInt(1))
+   {
+   case 1: doShowRec1(); break;
+   case 2: doShowRec2(); break;
+   }
 }
 
 //******************************************************************************

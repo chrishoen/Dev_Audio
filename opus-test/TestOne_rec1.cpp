@@ -63,7 +63,7 @@ static pa_stream* stream = 0;
 static const char* cFilePath = "/opt/prime/tmp/record.raw";
 static const char* cDeviceName = "alsa_input.usb-046d_HD_Pro_Webcam_C920_51F943AF-02.analog-stereo";
 //static const char* cDeviceName = "alsa_input.hw_0_0";
-FILE* mFile = 0;
+static FILE* mFile = 0;
 static int read_count = 0;
 static bool mShowFlag = false;
 static bool mWriteFlag = true;
@@ -357,7 +357,7 @@ void doStopRec1()
 void doShowRec1()
 {
    if (!mainloop) return;
-   printf("show*****************************************begin\n");
+   printf("show1*****************************************\n");
    pa_threaded_mainloop_lock(mainloop);
 
    switch (pa_stream_get_state(stream))
@@ -376,5 +376,4 @@ void doShowRec1()
       pa_stream_is_suspended(stream) ? "" : "not ");
 
    pa_threaded_mainloop_unlock(mainloop);
-   printf("show*****************************************end\n");
 }

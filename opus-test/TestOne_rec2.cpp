@@ -60,10 +60,12 @@ static pa_mainloop_api* mainloop_api = 0;
 static pa_context* context = 0;
 static pa_stream* stream = 0;
 
-static const char* cFilePath = "/opt/prime/tmp/record.raw";
+static pa_sample_spec sample_spec;
+
+static const char* cFilePath = "/opt/prime/tmp/record.wav";
 static const char* cDeviceName = "alsa_input.usb-046d_HD_Pro_Webcam_C920_51F943AF-02.analog-stereo";
 //static const char* cDeviceName = "alsa_input.hw_0_0";
-static FILE* mFile = 0;
+static SNDFILE* mFile = NULL;
 static int read_count = 0;
 static bool mShowFlag = false;
 static bool mWriteFlag = true;
@@ -95,10 +97,10 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
       if (tValue < tMin) tMin = tValue;
       if (tValue > tMax) tMax = tValue;
    }
-   // Write the samples to the raw file.
+   // Write the samples to the wav file.
    if (mWriteFlag)
    {
-      fwrite(peek_sample_buffer, 2, samples_to_peek, mFile);
+      sf_write_raw(mFile, peek_sample_buffer, bytes_to_peek);
    }
 
    // Stream drop.
@@ -184,10 +186,6 @@ static void context_state_cb(pa_context* c, void* userdata)
       printf("context ready\n");
 
       // Create a stream
-      pa_sample_spec sample_spec;
-      sample_spec.rate = 32000;
-      sample_spec.channels = 1;
-      sample_spec.format = PA_SAMPLE_S16LE;
       stream = pa_stream_new(context, "Record", &sample_spec, NULL);
       printf("pa_stream_new PASS\n");
 
@@ -247,9 +245,32 @@ void doRec2(bool aShowFlag)
    int retval;
    int error;
 
-   // Open raw file.
-   printf("opening record file %s\n", cFilePath);
-   mFile = fopen(cFilePath, "wb");
+   // Set the global sample spec.
+   sample_spec.rate = 32000;
+   sample_spec.channels = 1;
+   sample_spec.format = PA_SAMPLE_S16LE;
+
+   // Set file info.
+   SF_INFO sfi;
+   memset(&sfi, 0, sizeof(sfi));
+   sfi.samplerate = sample_spec.rate;
+   sfi.channels = sample_spec.channels;
+   sfi.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
+   sfi.frames = sample_spec.rate * sample_spec.channels * 2;
+   if (!sf_format_check(&sfi))
+   {
+      printf("sf_format_check FAIL\n");
+      return;
+   }
+
+   // Open file.
+   mFile = sf_open(cFilePath, SFM_WRITE, &sfi);
+   if (!mFile)
+   {
+      printf("sf_open FAIL\n");
+      return;
+   }
+   printf("openned record file %s\n", cFilePath);
 
    // Get a mainloop and its context
    mShowFlag = aShowFlag;
@@ -342,7 +363,7 @@ void doStopRec2()
       pa_threaded_mainloop_free(mainloop);
    }
 
-   fclose(mFile);
+   sf_close(mFile);
 
    printf("stopped\n");
    mainloop = 0;

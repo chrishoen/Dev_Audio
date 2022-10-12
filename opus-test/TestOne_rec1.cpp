@@ -185,7 +185,7 @@ static void context_state_cb(pa_context* c, void* userdata)
 
       // Create a stream
       pa_sample_spec sample_spec;
-      sample_spec.rate = 32000;
+      sample_spec.rate = 44100;
       sample_spec.channels = 1;
       sample_spec.format = PA_SAMPLE_S16LE;
       stream = pa_stream_new(context, "Record", &sample_spec, NULL);

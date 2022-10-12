@@ -246,7 +246,7 @@ void doRec2(bool aShowFlag)
    int error;
 
    // Set the global sample spec.
-   sample_spec.rate = 32000;
+   sample_spec.rate = 44100;
    sample_spec.channels = 1;
    sample_spec.format = PA_SAMPLE_S16LE;
 

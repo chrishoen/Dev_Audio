@@ -256,20 +256,20 @@ void doRec2(bool aShowFlag)
    mSampleSpec.format = PA_SAMPLE_S16LE;
 
    // Set file info.
-   SF_INFO sfi;
-   memset(&sfi, 0, sizeof(sfi));
-   sfi.samplerate = mSampleSpec.rate;
-   sfi.channels = mSampleSpec.channels;
-   sfi.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
-   sfi.frames = mSampleSpec.rate * mSampleSpec.channels * 2;
-   if (!sf_format_check(&sfi))
+   SF_INFO tSFInfo;
+   memset(&tSFInfo, 0, sizeof(tSFInfo));
+   tSFInfo.samplerate = mSampleSpec.rate;
+   tSFInfo.channels = mSampleSpec.channels;
+   tSFInfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
+   tSFInfo.frames = mSampleSpec.rate * mSampleSpec.channels * 2;
+   if (!sf_format_check(&tSFInfo))
    {
       printf("sf_format_check FAIL\n");
       return;
    }
 
    // Open file.
-   mFile = sf_open(cFilePath, SFM_WRITE, &sfi);
+   mFile = sf_open(cFilePath, SFM_WRITE, &tSFInfo);
    if (!mFile)
    {
       printf("sf_open FAIL\n");

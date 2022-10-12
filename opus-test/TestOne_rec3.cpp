@@ -77,6 +77,7 @@ static double mTime = 0;
 static double mLastTime = 0;
 static double mDeltaTime = 0;
 static double mStartReadTime = 0;
+static double mStopReadTime = 0;
 
 static bool mPauseReq = false;
 static bool mResumeReq = false;
@@ -88,6 +89,7 @@ static bool mWriteFlag = false;
 
 static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
 {
+   int tRet = 0;
    // Get times.
    if (mFirstReadFlag)
    {
@@ -102,6 +104,7 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
    // Check for pause request.
    if (mPauseReq)
    {
+      // Flags.
       Prn::print(Prn::Show1, "paused %.3f", mTime);
       mPauseReq = false;
       mWriteFlag = false;
@@ -110,13 +113,22 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
    // Check for resume request.
    if (mResumeReq)
    {
+      // Flags.
       Prn::print(Prn::Show1, "resumed %.3f", mTime);
       mResumeReq = false;
       mWriteFlag = true;
+      // Chain a new stream.
+      tRet = ope_encoder_chain_current(mEncoder, mComments);
+      if (tRet)
+      {
+         Prn::print(Prn::Show1, "ope_encoder_chain_current FAIL");
+         mWriteFlag = false;
+         return;
+      }
+      Prn::print(Prn::Show1, "ope_encoder_chain_current PASS");
    }
 
    // Read.
-   int tRet = 0;
    short* tPeekSampleBuffer = 0;
    size_t tBytesToPeek = aLength;
    int tMin = 0;
@@ -291,7 +303,10 @@ void doRec3(bool aShowFlag)
    int tRet;
 
    // Do this first.
-   Prn::setFilter(Prn::Show2, true);
+   if (aShowFlag)
+   {
+      Prn::setFilter(Prn::Show2, true);
+   }
    mFirstReadFlag = true;
    mPauseReq = false;
    mResumeReq = false;
@@ -395,7 +410,8 @@ void doRec3(bool aShowFlag)
 void doStopRec3()
 {
    if (mMainLoop == 0) return;
-   printf("stopping\n");
+   mStopReadTime = Ris::getProgramTime() - mStartReadTime;
+   Prn::print(Prn::Show1, "stopping %.3f\n", mStopReadTime);
    pa_threaded_mainloop_stop(mMainLoop);
    pa_stream_disconnect(mStream);
    pa_context_disconnect(mContext);
@@ -420,7 +436,7 @@ void doStopRec3()
    ope_encoder_destroy(mEncoder);
    ope_comments_destroy(mComments);
 
-   printf("stopped\n");
+   Prn::print(Prn::Show1, "stopped %.3f\n", mStopReadTime);
    mMainLoop = 0;
    mContext = 0;
    mStream = 0;

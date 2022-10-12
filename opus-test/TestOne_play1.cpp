@@ -17,7 +17,8 @@ static void stream_state_cb(pa_stream* s, void* mainloop);
 static void stream_success_cb(pa_stream* stream, int success, void* userdata);
 static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata);
 
-static const char* cFilePath = "/opt/prime/single/kashmir1.opus";
+//static const char* cFilePath = "/opt/prime/single/kashmir1.opus";
+static const char* cFilePath = "/opt/prime/tmp/record.opus";
 static OggOpusFile* mFile = 0;
 
 static void context_state_cb(pa_context* context, void* mainloop)

@@ -272,9 +272,8 @@ void doRec1(bool aShowFlag)
    while (1)
    {
       printf("context ready loop begin\n");
-      pa_context_state_t context_state = pa_context_get_state(mContext);
-      assert(PA_CONTEXT_IS_GOOD(context_state));
-      if (context_state == PA_CONTEXT_READY)
+      pa_context_state_t tContextState = pa_context_get_state(mContext);
+      if (tContextState == PA_CONTEXT_READY)
       {
          printf("context ready loop ready\n");
          break;
@@ -290,10 +289,9 @@ void doRec1(bool aShowFlag)
       if (mStream)
       {
          pa_threaded_mainloop_lock(mMainLoop);
-         pa_stream_state_t stream_state = pa_stream_get_state(mStream);
+         pa_stream_state_t tStreamState = pa_stream_get_state(mStream);
          pa_threaded_mainloop_unlock(mMainLoop);
-         assert(PA_STREAM_IS_GOOD(stream_state));
-         if (stream_state == PA_STREAM_READY)
+         if (tStreamState == PA_STREAM_READY)
          {
             printf("stream ready loop ready\n");
             break;

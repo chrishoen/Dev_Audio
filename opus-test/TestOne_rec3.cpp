@@ -55,10 +55,10 @@ static void stream_success_cb(pa_stream* stream, int success, void* userdata)
 //******************************************************************************
 //******************************************************************************
 
-static pa_threaded_mainloop* mainloop = 0;
-static pa_mainloop_api* mainloop_api = 0;
-static pa_context* context = 0;
-static pa_stream* stream = 0;
+static pa_threaded_mainloop* mMainLoop = 0;
+static pa_mainloop_api* mMainLoopApi = 0;
+static pa_context* mContext = 0;
+static pa_stream* mStream = 0;
 
 static pa_sample_spec sample_spec;
 
@@ -67,6 +67,7 @@ static const char* cDeviceName = "alsa_input.usb-046d_HD_Pro_Webcam_C920_51F943A
 //static const char* cDeviceName = "alsa_input.hw_0_0";
 static struct OggOpusEnc* mEncoder;
 static struct OggOpusComments* mComments;
+
 static int mReadCount = 0;
 static bool mShowFlag = false;
 static bool mWriteFlag = true;
@@ -150,7 +151,7 @@ static void stream_state_cb(pa_stream* s, void* userdata)
          pa_stream_is_suspended(s) ? "" : "not ");
 
       printf("stream_state_cb ready done\n");
-      pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
+      pa_threaded_mainloop_signal((pa_threaded_mainloop*)mMainLoop, 0);
       break;
 
    case PA_STREAM_FAILED:
@@ -182,19 +183,19 @@ static void context_state_cb(pa_context* c, void* userdata)
       printf("context ready\n");
 
       // Create a stream
-      stream = pa_stream_new(context, "Record", &sample_spec, NULL);
+      mStream = pa_stream_new(mContext, "Record", &sample_spec, NULL);
       printf("pa_stream_new PASS\n");
 
       // Assign stream callbacks.
-      pa_stream_set_state_callback(stream, stream_state_cb, NULL);
-      pa_stream_set_read_callback(stream, stream_read_cb, NULL);
-      pa_stream_set_suspended_callback(stream, stream_suspended_cb, NULL);
-      pa_stream_set_moved_callback(stream, stream_moved_cb, NULL);
-      pa_stream_set_underflow_callback(stream, stream_underflow_cb, NULL);
-      pa_stream_set_overflow_callback(stream, stream_overflow_cb, NULL);
-      pa_stream_set_started_callback(stream, stream_started_cb, NULL);
-      pa_stream_set_event_callback(stream, stream_event_cb, NULL);
-      pa_stream_set_buffer_attr_callback(stream, stream_buffer_attr_cb, NULL);
+      pa_stream_set_state_callback(mStream, stream_state_cb, NULL);
+      pa_stream_set_read_callback(mStream, stream_read_cb, NULL);
+      pa_stream_set_suspended_callback(mStream, stream_suspended_cb, NULL);
+      pa_stream_set_moved_callback(mStream, stream_moved_cb, NULL);
+      pa_stream_set_underflow_callback(mStream, stream_underflow_cb, NULL);
+      pa_stream_set_overflow_callback(mStream, stream_overflow_cb, NULL);
+      pa_stream_set_started_callback(mStream, stream_started_cb, NULL);
+      pa_stream_set_event_callback(mStream, stream_event_cb, NULL);
+      pa_stream_set_buffer_attr_callback(mStream, stream_buffer_attr_cb, NULL);
       printf("set stream callbacks PASS\n");
 
       // Connect stream.
@@ -207,7 +208,7 @@ static void context_state_cb(pa_context* c, void* userdata)
       // Connect stream to the default audio output sink
    // tRet = pa_stream_connect_record(stream, NULL, &buffer_attr, stream_flags);
    // tRet = pa_stream_connect_record(stream, cDeviceName, NULL, stream_flags);
-      tRet = pa_stream_connect_record(stream, NULL, NULL, stream_flags);
+      tRet = pa_stream_connect_record(mStream, NULL, NULL, stream_flags);
       if (tRet)
       {
          printf("pa_stream_connect_record FAIL %d %s\n", tRet, pa_strerror(tRet));
@@ -216,7 +217,7 @@ static void context_state_cb(pa_context* c, void* userdata)
       printf("pa_stream_connect_record PASS\n");
       printf("context ready done\n");
       // Signal the main thread.
-      pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
+      pa_threaded_mainloop_signal((pa_threaded_mainloop*)mMainLoop, 0);
       break;
    }
 
@@ -269,22 +270,22 @@ void doRec3(bool aShowFlag)
 
    // Get a mainloop and its context
    mShowFlag = aShowFlag;
-   mainloop = pa_threaded_mainloop_new();
-   mainloop_api = pa_threaded_mainloop_get_api(mainloop);
-   context = pa_context_new(mainloop_api, "pcm-playback");
-   pa_context_set_state_callback(context, &context_state_cb, mainloop);
+   mMainLoop = pa_threaded_mainloop_new();
+   mMainLoopApi = pa_threaded_mainloop_get_api(mMainLoop);
+   mContext = pa_context_new(mMainLoopApi, "pcm-playback");
+   pa_context_set_state_callback(mContext, &context_state_cb, mMainLoop);
 
    // Lock the mainloop so that it does not run and crash before the context is ready
-   pa_threaded_mainloop_lock(mainloop);
+   pa_threaded_mainloop_lock(mMainLoop);
 
    // Start the mainloop
-   tRet = pa_threaded_mainloop_start(mainloop);
+   tRet = pa_threaded_mainloop_start(mMainLoop);
    if (tRet)
    {
       printf("pa_threaded_mainloop_start FAIL\n");
       return;
    }
-   tRet = pa_context_connect(context, NULL, PA_CONTEXT_NOAUTOSPAWN, NULL);
+   tRet = pa_context_connect(mContext, NULL, PA_CONTEXT_NOAUTOSPAWN, NULL);
    if (tRet)
    {
       printf("pa_context_connect FAIL\n");
@@ -295,14 +296,14 @@ void doRec3(bool aShowFlag)
    while (1)
    {
       printf("context ready loop begin\n");
-      pa_context_state_t context_state = pa_context_get_state(context);
+      pa_context_state_t context_state = pa_context_get_state(mContext);
       assert(PA_CONTEXT_IS_GOOD(context_state));
       if (context_state == PA_CONTEXT_READY)
       {
          printf("context ready loop ready\n");
          break;
       }
-      pa_threaded_mainloop_wait(mainloop);
+      pa_threaded_mainloop_wait(mMainLoop);
       printf("context ready loop end\n");
    }
 
@@ -310,11 +311,11 @@ void doRec3(bool aShowFlag)
    while (1)
    {
       printf("stream ready loop begin\n");
-      if (stream)
+      if (mStream)
       {
-         pa_threaded_mainloop_lock(mainloop);
-         pa_stream_state_t stream_state = pa_stream_get_state(stream);
-         pa_threaded_mainloop_unlock(mainloop);
+         pa_threaded_mainloop_lock(mMainLoop);
+         pa_stream_state_t stream_state = pa_stream_get_state(mStream);
+         pa_threaded_mainloop_unlock(mMainLoop);
          assert(PA_STREAM_IS_GOOD(stream_state));
          if (stream_state == PA_STREAM_READY)
          {
@@ -322,15 +323,15 @@ void doRec3(bool aShowFlag)
             break;
          }
       }
-      pa_threaded_mainloop_wait(mainloop);
+      pa_threaded_mainloop_wait(mMainLoop);
       printf("stream ready loop end\n");
    }
    printf("stream ready\n");
 
-   pa_threaded_mainloop_unlock(mainloop);
+   pa_threaded_mainloop_unlock(mMainLoop);
 
    // Uncork the stream so it will start playing
-   pa_stream_cork(stream, 0, stream_success_cb, mainloop);
+   pa_stream_cork(mStream, 0, stream_success_cb, mMainLoop);
 
    printf("running\n");
 }
@@ -341,21 +342,26 @@ void doRec3(bool aShowFlag)
 
 void doStopRec3()
 {
-   if (mainloop == 0) return;
+   if (mMainLoop == 0) return;
    printf("stopping\n");
-   pa_threaded_mainloop_stop(mainloop);
-   pa_stream_disconnect(stream);
-   pa_context_disconnect(context);
+   pa_threaded_mainloop_stop(mMainLoop);
+   pa_stream_disconnect(mStream);
+   pa_context_disconnect(mContext);
 
-   if (stream)
-      pa_stream_unref(stream);
+   if (mStream)
+   {
+      pa_stream_unref(mStream);
+   }
 
-   if (context)
-      pa_context_unref(context);
+   if (mContext)
+   {
+      pa_context_unref(mContext);
+   }
 
-   if (mainloop) {
+   if (mMainLoop)
+   {
       pa_signal_done();
-      pa_threaded_mainloop_free(mainloop);
+      pa_threaded_mainloop_free(mMainLoop);
    }
 
    ope_encoder_drain(mEncoder);
@@ -363,9 +369,9 @@ void doStopRec3()
    ope_comments_destroy(mComments);
 
    printf("stopped\n");
-   mainloop = 0;
-   context = 0;
-   stream = 0;
+   mMainLoop = 0;
+   mContext = 0;
+   mStream = 0;
 }
 
 //******************************************************************************
@@ -374,11 +380,11 @@ void doStopRec3()
 
 void doShowRec3()
 {
-   if (!mainloop) return;
+   if (!mMainLoop) return;
    printf("show2*****************************************\n");
-   pa_threaded_mainloop_lock(mainloop);
+   pa_threaded_mainloop_lock(mMainLoop);
 
-   switch (pa_stream_get_state(stream))
+   switch (pa_stream_get_state(mStream))
    {
    case PA_STREAM_READY:
       printf("stream ready\n");
@@ -389,9 +395,9 @@ void doShowRec3()
    }
 
    printf("Connected to device %s (%u, %ssuspended).\n",
-      pa_stream_get_device_name(stream),
-      pa_stream_get_device_index(stream),
-      pa_stream_is_suspended(stream) ? "" : "not ");
+      pa_stream_get_device_name(mStream),
+      pa_stream_get_device_index(mStream),
+      pa_stream_is_suspended(mStream) ? "" : "not ");
 
-   pa_threaded_mainloop_unlock(mainloop);
+   pa_threaded_mainloop_unlock(mMainLoop);
 }

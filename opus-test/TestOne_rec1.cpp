@@ -73,19 +73,19 @@ static bool mWriteFlag = true;
 //******************************************************************************
 //******************************************************************************
 
-static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
+static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
 {
    int count = 0;
 
    // Read.
    int tRet = 0;
    short* peek_sample_buffer = 0;
-   size_t bytes_to_peek = length;
+   size_t bytes_to_peek = aLength;
    int tMin = 0;
    int tMax = 0;
 
    // Stream peek. 
-   pa_stream_peek(stream, (const void**)&peek_sample_buffer, &bytes_to_peek);
+   pa_stream_peek(aStream, (const void**)&peek_sample_buffer, &bytes_to_peek);
    int samples_to_peek = bytes_to_peek / 2;
    // Metrics.
    for (int i = 0; i < samples_to_peek; i++)
@@ -96,7 +96,7 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
    }
 
    // Stream drop.
-   pa_stream_drop(stream);
+   pa_stream_drop(aStream);
 
    if (mShowFlag)
    {
@@ -111,9 +111,9 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
 //******************************************************************************
 //******************************************************************************
 
-static void stream_state_cb(pa_stream* s, void* userdata)
+static void stream_state_cb(pa_stream* aStream, void* aUserData)
 {
-   switch (pa_stream_get_state(s))
+   switch (pa_stream_get_state(aStream))
    {
    case PA_STREAM_CREATING:
       printf("stream_state_cb creating\n");
@@ -124,26 +124,28 @@ static void stream_state_cb(pa_stream* s, void* userdata)
 
    case PA_STREAM_READY:
       printf("stream_state_cb ready\n");
-      const pa_buffer_attr* a;
+      const pa_buffer_attr* tBuffAttr;
       char cmt[PA_CHANNEL_MAP_SNPRINT_MAX], sst[PA_SAMPLE_SPEC_SNPRINT_MAX];
 
-      if (!(a = pa_stream_get_buffer_attr(s)))
+      if (!(tBuffAttr = pa_stream_get_buffer_attr(aStream)))
       {
-         printf("pa_stream_get_buffer_attr failed: %s\n", pa_strerror(pa_context_errno(pa_stream_get_context(s))));
+         printf("pa_stream_get_buffer_attr failed: %s\n",
+            pa_strerror(pa_context_errno(pa_stream_get_context(aStream))));
       }
       else
       {
-         printf("Buffer metrics: maxlength=%u, fragsize=%u\n", a->maxlength, a->fragsize);
+         printf("Buffer metrics: maxlength=%u, fragsize=%u\n",
+            tBuffAttr->maxlength, tBuffAttr->fragsize);
       }
 
       printf("Using sample spec '%s', channel map '%s'.\n",
-         pa_sample_spec_snprint(sst, sizeof(sst), pa_stream_get_sample_spec(s)),
-         pa_channel_map_snprint(cmt, sizeof(cmt), pa_stream_get_channel_map(s)));
+         pa_sample_spec_snprint(sst, sizeof(sst), pa_stream_get_sample_spec(aStream)),
+         pa_channel_map_snprint(cmt, sizeof(cmt), pa_stream_get_channel_map(aStream)));
 
       printf("Connected to device %s (%u, %ssuspended).\n",
-         pa_stream_get_device_name(s),
-         pa_stream_get_device_index(s),
-         pa_stream_is_suspended(s) ? "" : "not ");
+         pa_stream_get_device_name(aStream),
+         pa_stream_get_device_index(aStream),
+         pa_stream_is_suspended(aStream) ? "" : "not ");
 
       printf("stream_state_cb ready done\n");
       pa_threaded_mainloop_signal((pa_threaded_mainloop*)mMainLoop, 0);
@@ -151,7 +153,8 @@ static void stream_state_cb(pa_stream* s, void* userdata)
 
    case PA_STREAM_FAILED:
    default:
-      printf("Stream error: %s\n", pa_strerror(pa_context_errno(pa_stream_get_context(s))));
+      printf("Stream error: %s\n", 
+         pa_strerror(pa_context_errno(pa_stream_get_context(aStream))));
       break;
    }
 }
@@ -160,7 +163,7 @@ static void stream_state_cb(pa_stream* s, void* userdata)
 //******************************************************************************
 //******************************************************************************
 
-static void context_state_cb(pa_context* c, void* userdata)
+static void context_state_cb(pa_context* c, void* aUserData)
 {
    int tRet = 0;
    switch (pa_context_get_state(c))

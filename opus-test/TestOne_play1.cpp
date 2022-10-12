@@ -12,48 +12,62 @@ Description:
 #include <pulse/pulseaudio.h>
 #include <opus/opusfile.h>
 
-static void context_state_cb(pa_context* context, void* mainloop);
-static void stream_state_cb(pa_stream* s, void* mainloop);
-static void stream_success_cb(pa_stream* stream, int success, void* userdata);
-static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata);
-
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
 //static const char* cFilePath = "/opt/prime/single/kashmir1.opus";
+
+static pa_threaded_mainloop* mMainLoop = 0;
+static pa_mainloop_api* mMainLoopApi = 0;
+static pa_context* mContext = 0;
+static pa_stream* mStream = 0;
+
+pa_sample_spec mSampleSpec;
+
 static const char* cFilePath = "/opt/prime/tmp/record.opus";
 static OggOpusFile* mFile = 0;
+static int write_count = 0;
 
-static void context_state_cb(pa_context* context, void* mainloop)
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
+static void context_state_cb(pa_context* aContext, void* aMainloop)
 {
-   pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
+   pa_threaded_mainloop_signal((pa_threaded_mainloop*)aMainloop, 0);
 }
 
-static void stream_state_cb(pa_stream* s, void* mainloop)
+static void stream_state_cb(pa_stream* aStream, void* aMainloop)
 {
-   pa_threaded_mainloop_signal((pa_threaded_mainloop*)mainloop, 0);
+   pa_threaded_mainloop_signal((pa_threaded_mainloop*)aMainloop, 0);
 }
 
-static void stream_underflow_cb(pa_stream* s, void* userdata)
+static void stream_underflow_cb(pa_stream* aStream, void* aUserData)
 {
    printf("underflow\n");
 }
 
-static void stream_overflow_cb(pa_stream* s, void* userdata)
+static void stream_overflow_cb(pa_stream* aStream, void* aUserData)
 {
    printf("overflow\n");
 }
 
-static void stream_success_cb(pa_stream* stream, int success, void* userdata)
+static void stream_success_cb(pa_stream* aStream, int aSuccess, void* aUserData)
 {
-   return;
+   printf("success %d\n", aSuccess);
 }
 
-static int write_count = 0;
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
 static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
 {
    size_t bytes_remaining = requested_bytes;
    while (bytes_remaining > 0)
    {
       // Begin write.
-      int retval = 0;
+      int tRet = 0;
       short* buffer = NULL;
       size_t bytes_to_fill = bytes_remaining;
       int tMin = 0;
@@ -89,15 +103,13 @@ static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* use
    }
 }
 
-
-static pa_threaded_mainloop* mainloop = 0;
-static pa_mainloop_api* mainloop_api = 0;
-static pa_context* context = 0;
-static pa_stream* stream = 0;
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
 
 void doPlay1(double aSkip)
 {
-   int retval;
+   int tRet;
 
    // Open opus file.
    printf("opening opus file %s\n", cFilePath);
@@ -120,25 +132,25 @@ void doPlay1(double aSkip)
    }
 
    // Get a mainloop and its context
-   mainloop = pa_threaded_mainloop_new();
-   mainloop_api = pa_threaded_mainloop_get_api(mainloop);
-   context = pa_context_new(mainloop_api, "pcm-playback");
+   mMainLoop = pa_threaded_mainloop_new();
+   mMainLoopApi = pa_threaded_mainloop_get_api(mMainLoop);
+   mContext = pa_context_new(mMainLoopApi, "pcm-playback");
 
    // Set a callback so we can wait for the context to be ready
-   pa_context_set_state_callback(context, &context_state_cb, mainloop);
+   pa_context_set_state_callback(mContext, &context_state_cb, mMainLoop);
 
    // Lock the mainloop so that it does not run and crash before the context is ready
-   pa_threaded_mainloop_lock(mainloop);
+   pa_threaded_mainloop_lock(mMainLoop);
 
    // Start the mainloop
-   retval = pa_threaded_mainloop_start(mainloop);
-   if (retval)
+   tRet = pa_threaded_mainloop_start(mMainLoop);
+   if (tRet)
    {
       printf("pa_threaded_mainloop_start FAIL\n");
       return;
    }
-   retval = pa_context_connect(context, NULL, PA_CONTEXT_NOAUTOSPAWN, NULL);
-   if (retval)
+   tRet = pa_context_connect(mContext, NULL, PA_CONTEXT_NOAUTOSPAWN, NULL);
+   if (tRet)
    {
       printf("pa_context_connect FAIL\n");
       return;
@@ -147,67 +159,67 @@ void doPlay1(double aSkip)
    // Wait for the context to be ready
    while (1)
    {
-      pa_context_state_t context_state = pa_context_get_state(context);
+      pa_context_state_t context_state = pa_context_get_state(mContext);
       assert(PA_CONTEXT_IS_GOOD(context_state));
       if (context_state == PA_CONTEXT_READY) break;
-      pa_threaded_mainloop_wait(mainloop);
+      pa_threaded_mainloop_wait(mMainLoop);
    }
 
    printf("ready\n");
 
    // Create a playback stream
-   pa_sample_spec sample_spec;
-   sample_spec.rate = 48000;
-   sample_spec.channels = 1;
-   sample_spec.format = PA_SAMPLE_S16LE;
+   mSampleSpec.rate = 48000;
+   mSampleSpec.channels = 1;
+   mSampleSpec.format = PA_SAMPLE_S16LE;
 
-   stream = pa_stream_new(context, "Playback", &sample_spec, NULL);
-   pa_stream_set_state_callback(stream, stream_state_cb, mainloop);
-   pa_stream_set_write_callback(stream, stream_write_cb, mainloop);
-   pa_stream_set_underflow_callback(stream, stream_underflow_cb, mainloop);
-   pa_stream_set_overflow_callback(stream, stream_overflow_cb, mainloop);
+   mStream = pa_stream_new(mContext, "Playback", &mSampleSpec, NULL);
+   pa_stream_set_state_callback(mStream, stream_state_cb, mMainLoop);
+   pa_stream_set_write_callback(mStream, stream_write_cb, mMainLoop);
+   pa_stream_set_underflow_callback(mStream, stream_underflow_cb, mMainLoop);
+   pa_stream_set_overflow_callback(mStream, stream_overflow_cb, mMainLoop);
 
    // recommended settings, i.e. server uses sensible values
-   pa_buffer_attr buffer_attr;
-   buffer_attr.maxlength = (uint32_t)-1;
-   buffer_attr.tlength = (uint32_t)-1;
-   buffer_attr.prebuf = (uint32_t)-1;
-   buffer_attr.minreq = (uint32_t)-1;
+   pa_buffer_attr tBufferAttr;
+   tBufferAttr.maxlength = (uint32_t)-1;
+   tBufferAttr.tlength = (uint32_t)-1;
+   tBufferAttr.prebuf = (uint32_t)-1;
+   tBufferAttr.minreq = (uint32_t)-1;
 
    // Settings copied as per the chromium browser source
-   pa_stream_flags_t stream_flags;
-   stream_flags = (pa_stream_flags_t)(
+   pa_stream_flags_t tStreamFlags;
+   tStreamFlags = (pa_stream_flags_t)(
       PA_STREAM_START_CORKED | PA_STREAM_INTERPOLATE_TIMING |
       PA_STREAM_NOT_MONOTONIC | PA_STREAM_AUTO_TIMING_UPDATE |
       PA_STREAM_ADJUST_LATENCY);
 
    // Connect stream to the default audio output sink
-   pa_stream_connect_playback(stream, NULL, &buffer_attr, stream_flags, NULL, NULL);
+   pa_stream_connect_playback(mStream, NULL, &tBufferAttr, tStreamFlags, NULL, NULL);
 
    // Wait for the stream to be ready
    while (1)
    {
-      pa_stream_state_t stream_state = pa_stream_get_state(stream);
-      assert(PA_STREAM_IS_GOOD(stream_state));
-      if (stream_state == PA_STREAM_READY) break;
-      pa_threaded_mainloop_wait(mainloop);
+      pa_stream_state_t tStreamState = pa_stream_get_state(mStream);
+      if (tStreamState == PA_STREAM_READY) break;
+      pa_threaded_mainloop_wait(mMainLoop);
    }
 
-   pa_threaded_mainloop_unlock(mainloop);
+   pa_threaded_mainloop_unlock(mMainLoop);
 
    // Uncork the stream so it will start playing
-   pa_stream_cork(stream, 0, stream_success_cb, mainloop);
+   pa_stream_cork(mStream, 0, stream_success_cb, mMainLoop);
 
    printf("running\n");
 }
 
 void doStopPlay1()
 {
-   if (mainloop == 0) return;
+   if (mMainLoop == 0) return;
    printf("stopping\n");
-   pa_threaded_mainloop_stop(mainloop);
-   pa_stream_disconnect(stream);
-   pa_context_disconnect(context);
+   pa_threaded_mainloop_stop(mMainLoop);
+   pa_stream_disconnect(mStream);
+   pa_context_disconnect(mContext);
    printf("stopped\n");
-   mainloop = 0;
+   mMainLoop = 0;
+   mContext = 0;
+   mStream = 0;
 }

@@ -163,10 +163,10 @@ static void stream_state_cb(pa_stream* aStream, void* aUserData)
 //******************************************************************************
 //******************************************************************************
 
-static void context_state_cb(pa_context* c, void* aUserData)
+static void context_state_cb(pa_context* aContext, void* aUserData)
 {
    int tRet = 0;
-   switch (pa_context_get_state(c))
+   switch (pa_context_get_state(aContext))
    {
    case PA_CONTEXT_CONNECTING:
       printf("context connecting\n");
@@ -202,16 +202,16 @@ static void context_state_cb(pa_context* c, void* aUserData)
       printf("set stream callbacks PASS\n");
 
       // Connect stream.
-      pa_stream_flags_t stream_flags;
-      stream_flags = (pa_stream_flags_t)(
+      pa_stream_flags_t tStreamFlags;
+      tStreamFlags = (pa_stream_flags_t)(
          PA_STREAM_START_CORKED | PA_STREAM_INTERPOLATE_TIMING |
          PA_STREAM_NOT_MONOTONIC | PA_STREAM_AUTO_TIMING_UPDATE |
          PA_STREAM_ADJUST_LATENCY);
-      stream_flags = (pa_stream_flags_t)0;
+      tStreamFlags = (pa_stream_flags_t)0;
       // Connect stream to the default audio output sink
    // tRet = pa_stream_connect_record(stream, NULL, &buffer_attr, stream_flags);
    // tRet = pa_stream_connect_record(stream, cDeviceName, NULL, stream_flags);
-      tRet = pa_stream_connect_record(mStream, NULL, NULL, stream_flags);
+      tRet = pa_stream_connect_record(mStream, NULL, NULL, tStreamFlags);
       if (tRet)
       {
          printf("pa_stream_connect_record FAIL %d %s\n", tRet, pa_strerror(tRet));
@@ -230,10 +230,9 @@ static void context_state_cb(pa_context* c, void* aUserData)
 
    case PA_CONTEXT_FAILED:
    default:
-      printf("Context failure: %s"), pa_strerror(pa_context_errno(c));
+      printf("Context failure: %s"), pa_strerror(pa_context_errno(aContext));
       break;
    }
-
 }
 
 //******************************************************************************

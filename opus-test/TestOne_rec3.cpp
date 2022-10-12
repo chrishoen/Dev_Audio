@@ -16,40 +16,39 @@ Description:
 //******************************************************************************
 //******************************************************************************
 
-static void stream_suspended_cb(pa_stream* s, void* mainloop)
+static void stream_suspended_cb(pa_stream* aStream, void* aMainLoop)
 {
    printf("stream_suspended_cb\n");
 }
-static void stream_moved_cb(pa_stream* s, void* mainloop)
+static void stream_moved_cb(pa_stream* aStream, void* aMainLoop)
 {
    printf("stream_moved_cb\n");
 }
-static void stream_underflow_cb(pa_stream* s, void* userdata)
+static void stream_underflow_cb(pa_stream* aStream, void* aUserData)
 {
    printf("stream_underflow_cb\n");
 }
-static void stream_overflow_cb(pa_stream* s, void* userdata)
+static void stream_overflow_cb(pa_stream* aStream, void* aUserData)
 {
    printf("stream_overflow_cb\n");
 }
-static void stream_started_cb(pa_stream* s, void* userdata)
+static void stream_started_cb(pa_stream* aStream, void* aUserData)
 {
    printf("stream_started_cb\n");
 }
-static void stream_event_cb(pa_stream* s, const char* name, pa_proplist* pl, void* userdata)
+static void stream_event_cb(pa_stream* aStream, const char* aName, pa_proplist* pl, void* aUserData)
 {
    printf("stream_event_cb\n");
 }
-static void stream_buffer_attr_cb(pa_stream* stream, void* userdata)
+static void stream_buffer_attr_cb(pa_stream* aStream, void* aUserData)
 {
    printf("stream_buffer_attr_cb\n");
 }
-static void stream_success_cb(pa_stream* stream, int success, void* userdata)
+static void stream_success_cb(pa_stream* aStream, int aSuccess, void* aUserData)
 {
-   printf("stream_success_cb %d\n", success);
+   printf("stream_success_cb %d\n", aSuccess);
    return;
 }
-
 
 //******************************************************************************
 //******************************************************************************

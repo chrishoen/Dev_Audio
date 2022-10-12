@@ -187,10 +187,12 @@ static void context_state_cb(pa_context* aContext, void* aUserData)
       printf("context ready\n");
 
       // Create a stream
-      mSampleSpec.rate = 44100;
-      mSampleSpec.channels = 1;
-      mSampleSpec.format = PA_SAMPLE_S16LE;
       mStream = pa_stream_new(mContext, "Record", &mSampleSpec, NULL);
+      if (!mStream)
+      {
+         printf("pa_stream_new FAIL\n");
+         return;
+      }
       printf("pa_stream_new PASS\n");
 
       // Assign stream callbacks.
@@ -246,9 +248,8 @@ static void context_state_cb(pa_context* aContext, void* aUserData)
 void doRec3(bool aShowFlag)
 {
    int tRet;
-   int error;
 
-   // Set the global sample spec.
+   // Set the sample spec.
    mSampleSpec.rate = 44100;
    mSampleSpec.channels = 1;
    mSampleSpec.format = PA_SAMPLE_S16LE;

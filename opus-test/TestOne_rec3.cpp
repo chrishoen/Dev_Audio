@@ -12,6 +12,9 @@ Description:
 #include <pulse/pulseaudio.h>
 #include <opusenc.h>
 
+#include "risProgramTime.h"
+#include "TestOne.h"
+
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
@@ -68,8 +71,13 @@ static struct OggOpusEnc* mEncoder;
 static struct OggOpusComments* mComments;
 
 static int mReadCount = 0;
-static bool mShowFlag = false;
-static bool mWriteFlag = true;
+
+static bool mFirstReadFlag = false;
+static double mTime = 0;
+static double mLastTime = 0;
+static double mDeltaTime = 0;
+static double mStartReadTime = 0;
+
 
 //******************************************************************************
 //******************************************************************************
@@ -77,7 +85,16 @@ static bool mWriteFlag = true;
 
 static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
 {
-   int count = 0;
+   // Get times.
+   if (mFirstReadFlag)
+   {
+      mFirstReadFlag = false;
+      mStartReadTime = Ris::getProgramTime();
+      static double mDeltaTime = 0;
+   }
+   mLastTime = mTime;
+   mTime = Ris::getProgramTime() - mStartReadTime;
+   mDeltaTime = mTime - mLastTime;
 
    // Read.
    int tRet = 0;
@@ -105,8 +122,9 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
    pa_stream_drop(aStream);
 
    // Show.
-   Prn::print(Prn::Show1, "stream_read_cb %d %d $ %4d %4d",
+   Prn::print(Prn::Show1, "stream_read_cb %4d $ %.3f  %.3f $ %5d $ %5d %5d",
       mReadCount++,
+      mTime, mDeltaTime,
       tSamplesToPeek,
       tMin, tMax);
 }
@@ -251,6 +269,7 @@ void doRec3(bool aShowFlag)
 
    // Do this first.
    Prn::setFilter(Prn::Show1, true);
+   mFirstReadFlag = true;
 
    // Set the sample spec.
    mSampleSpec.rate = 44100;
@@ -279,7 +298,6 @@ void doRec3(bool aShowFlag)
    printf("opus_encoder_create PASS\n");
 
    // Get a mainloop and its context
-   mShowFlag = aShowFlag;
    mMainLoop = pa_threaded_mainloop_new();
    mMainLoopApi = pa_threaded_mainloop_get_api(mMainLoop);
    mContext = pa_context_new(mMainLoopApi, "pcm-playback");

@@ -10,7 +10,7 @@ Description:
 #include <stdio.h>
 #include <assert.h>
 #include <pulse/pulseaudio.h>
-#include <sndfile.h>
+#include <opusenc.h>
 
 //******************************************************************************
 //******************************************************************************
@@ -62,10 +62,11 @@ static pa_stream* stream = 0;
 
 static pa_sample_spec sample_spec;
 
-static const char* cFilePath = "/opt/prime/tmp/record.wav";
+static const char* cFilePath = "/opt/prime/tmp/record.opus";
 static const char* cDeviceName = "alsa_input.usb-046d_HD_Pro_Webcam_C920_51F943AF-02.analog-stereo";
 //static const char* cDeviceName = "alsa_input.hw_0_0";
-static SNDFILE* mFile = NULL;
+static struct OggOpusEnc* mEncoder;
+static struct OggOpusComments* mComments;
 static int read_count = 0;
 static bool mShowFlag = false;
 static bool mWriteFlag = true;
@@ -76,7 +77,6 @@ static bool mWriteFlag = true;
 
 static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
 {
-   int total_samples = 0;
    int count = 0;
 
    // Read.
@@ -89,7 +89,6 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
    // Stream peek. 
    pa_stream_peek(stream, (const void**)&peek_sample_buffer, &bytes_to_peek);
    int samples_to_peek = bytes_to_peek / 2;
-   total_samples += samples_to_peek;
    // Metrics.
    for (int i = 0; i < samples_to_peek; i++)
    {
@@ -97,11 +96,8 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
       if (tValue < tMin) tMin = tValue;
       if (tValue > tMax) tMax = tValue;
    }
-   // Write the samples to the wav file.
-   if (mWriteFlag)
-   {
-      sf_write_raw(mFile, peek_sample_buffer, bytes_to_peek);
-   }
+   // Write the samples to the encoder file.
+   ope_encoder_write(mEncoder, peek_sample_buffer, samples_to_peek);
 
    // Stream drop.
    pa_stream_drop(stream);
@@ -110,7 +106,7 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
    {
       printf("stream_read_cb %d %d $ %4d %4d\n",
          read_count++,
-         total_samples,
+         samples_to_peek,
          tMin, tMax);
    }
 }
@@ -250,27 +246,26 @@ void doRec3(bool aShowFlag)
    sample_spec.channels = 1;
    sample_spec.format = PA_SAMPLE_S16LE;
 
-   // Set file info.
-   SF_INFO sfi;
-   memset(&sfi, 0, sizeof(sfi));
-   sfi.samplerate = sample_spec.rate;
-   sfi.channels = sample_spec.channels;
-   sfi.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
-   sfi.frames = sample_spec.rate * sample_spec.channels * 2;
-   if (!sf_format_check(&sfi))
+   // Open opus file.
+   printf("opening opus record file %s\n", cFilePath);
+   // Opus comments.
+   mComments = ope_comments_create();
+   ope_comments_add(mComments, "ARTIST", "steno");
+   ope_comments_add(mComments, "TITLE", "talking");
+   // Opus encoder.
+   mEncoder = ope_encoder_create_file(cFilePath, mComments, 44100, 1, 0, &retval);
+   if (!mEncoder)
    {
-      printf("sf_format_check FAIL\n");
+      fprintf(stderr, "error encoding to file %s: %s\n", cFilePath, ope_strerror(retval));
+      ope_comments_destroy(mComments);
       return;
    }
-
-   // Open file.
-   mFile = sf_open(cFilePath, SFM_WRITE, &sfi);
-   if (!mFile)
+   if (retval)
    {
-      printf("sf_open FAIL\n");
+      printf("opus_encoder_create FAIL %d\n", retval);
       return;
    }
-   printf("openned record file %s\n", cFilePath);
+   printf("opus_encoder_create PASS\n");
 
    // Get a mainloop and its context
    mShowFlag = aShowFlag;
@@ -363,7 +358,9 @@ void doStopRec3()
       pa_threaded_mainloop_free(mainloop);
    }
 
-   sf_close(mFile);
+   ope_encoder_drain(mEncoder);
+   ope_encoder_destroy(mEncoder);
+   ope_comments_destroy(mComments);
 
    printf("stopped\n");
    mainloop = 0;

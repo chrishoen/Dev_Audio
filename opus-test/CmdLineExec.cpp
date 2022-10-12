@@ -38,7 +38,7 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
    if (aCmd->isCmd("PLAY"))  executePlay(aCmd);
    if (aCmd->isCmd("REC1"))  executeRec1(aCmd);
    if (aCmd->isCmd("REC2"))  executeRec2(aCmd);
-   if (aCmd->isCmd("REC3"))  executeRec2(aCmd);
+   if (aCmd->isCmd("REC3"))  executeRec3(aCmd);
    if (aCmd->isCmd("INFO"))  doShowInfo();
    if (aCmd->isCmd("SHOW"))  executeShow(aCmd);
    if (aCmd->isCmd("S"))     executeStop(aCmd);

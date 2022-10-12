@@ -59,10 +59,12 @@ static pa_mainloop_api* mMainLoopApi = 0;
 static pa_context* mContext = 0;
 static pa_stream* mStream = 0;
 
+static pa_sample_spec mSampleSpec;
+
 static const char* cFilePath = "/opt/prime/tmp/record.raw";
 static const char* cDeviceName = "alsa_input.usb-046d_HD_Pro_Webcam_C920_51F943AF-02.analog-stereo";
 //static const char* cDeviceName = "alsa_input.hw_0_0";
-static FILE* mFile = 0;
+
 static int mReadCount = 0;
 static bool mShowFlag = false;
 static bool mWriteFlag = true;
@@ -73,7 +75,6 @@ static bool mWriteFlag = true;
 
 static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
 {
-   int total_samples = 0;
    int count = 0;
 
    // Read.
@@ -86,18 +87,12 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
    // Stream peek. 
    pa_stream_peek(stream, (const void**)&peek_sample_buffer, &bytes_to_peek);
    int samples_to_peek = bytes_to_peek / 2;
-   total_samples += samples_to_peek;
    // Metrics.
    for (int i = 0; i < samples_to_peek; i++)
    {
       short tValue = peek_sample_buffer[i];
       if (tValue < tMin) tMin = tValue;
       if (tValue > tMax) tMax = tValue;
-   }
-   // Write the samples to the raw file.
-   if (mWriteFlag)
-   {
-      fwrite(peek_sample_buffer, 2, samples_to_peek, mFile);
    }
 
    // Stream drop.
@@ -107,7 +102,7 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
    {
       printf("stream_read_cb %d %d $ %4d %4d\n",
          mReadCount++,
-         total_samples,
+         samples_to_peek,
          tMin, tMax);
    }
 }
@@ -168,7 +163,8 @@ static void stream_state_cb(pa_stream* s, void* userdata)
 static void context_state_cb(pa_context* c, void* userdata)
 {
    int tRet = 0;
-   switch (pa_context_get_state(c)) {
+   switch (pa_context_get_state(c))
+   {
    case PA_CONTEXT_CONNECTING:
       printf("context connecting\n");
       break;
@@ -179,15 +175,15 @@ static void context_state_cb(pa_context* c, void* userdata)
       printf("context setting name\n");
       break;
 
-   case PA_CONTEXT_READY: {
+   case PA_CONTEXT_READY:
+   {
       printf("context ready\n");
 
       // Create a stream
-      pa_sample_spec sample_spec;
-      sample_spec.rate = 44100;
-      sample_spec.channels = 1;
-      sample_spec.format = PA_SAMPLE_S16LE;
-      mStream = pa_stream_new(mContext, "Record", &sample_spec, NULL);
+      mSampleSpec.rate = 44100;
+      mSampleSpec.channels = 1;
+      mSampleSpec.format = PA_SAMPLE_S16LE;
+      mStream = pa_stream_new(mContext, "Record", &mSampleSpec, NULL);
       printf("pa_stream_new PASS\n");
 
       // Assign stream callbacks.
@@ -245,10 +241,6 @@ void doRec1(bool aShowFlag)
 {
    int tRet;
    int error;
-
-   // Open raw file.
-   printf("opening record file %s\n", cFilePath);
-   mFile = fopen(cFilePath, "wb");
 
    // Get a mainloop and its context
    mShowFlag = aShowFlag;
@@ -345,8 +337,6 @@ void doStopRec1()
       pa_signal_done();
       pa_threaded_mainloop_free(mMainLoop);
    }
-
-   fclose(mFile);
 
    printf("stopped\n");
    mMainLoop = 0;

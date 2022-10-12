@@ -59,7 +59,7 @@ static pa_mainloop_api* mMainLoopApi = 0;
 static pa_context* mContext = 0;
 static pa_stream* mStream = 0;
 
-static pa_sample_spec sample_spec;
+static pa_sample_spec mSampleSpec;
 
 static const char* cFilePath = "/opt/prime/tmp/record.opus";
 static const char* cDeviceName = "alsa_input.usb-046d_HD_Pro_Webcam_C920_51F943AF-02.analog-stereo";
@@ -182,7 +182,7 @@ static void context_state_cb(pa_context* c, void* userdata)
       printf("context ready\n");
 
       // Create a stream
-      mStream = pa_stream_new(mContext, "Record", &sample_spec, NULL);
+      mStream = pa_stream_new(mContext, "Record", &mSampleSpec, NULL);
       printf("pa_stream_new PASS\n");
 
       // Assign stream callbacks.
@@ -242,9 +242,9 @@ void doRec3(bool aShowFlag)
    int error;
 
    // Set the global sample spec.
-   sample_spec.rate = 44100;
-   sample_spec.channels = 1;
-   sample_spec.format = PA_SAMPLE_S16LE;
+   mSampleSpec.rate = 44100;
+   mSampleSpec.channels = 1;
+   mSampleSpec.format = PA_SAMPLE_S16LE;
 
    // Open opus file.
    printf("opening opus record file %s\n", cFilePath);

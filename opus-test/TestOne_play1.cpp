@@ -26,7 +26,7 @@ pa_sample_spec mSampleSpec;
 
 static const char* cFilePath = "/opt/prime/tmp/record.opus";
 static OggOpusFile* mFile = 0;
-static int write_count = 0;
+static int mWriteCount = 0;
 
 //******************************************************************************
 //******************************************************************************
@@ -61,44 +61,49 @@ static void stream_success_cb(pa_stream* aStream, int aSuccess, void* aUserData)
 //******************************************************************************
 //******************************************************************************
 
-static void stream_write_cb(pa_stream* stream, size_t requested_bytes, void* userdata)
+static void stream_write_cb(pa_stream* aStream, size_t aRequestedBytes, void* aUserData)
 {
-   size_t bytes_remaining = requested_bytes;
-   while (bytes_remaining > 0)
+   size_t tBytesRemaining = aRequestedBytes;
+   while (tBytesRemaining > 0)
    {
-      // Begin write.
+      // Begin write buffer to stream.
       int tRet = 0;
-      short* buffer = NULL;
-      size_t bytes_to_fill = bytes_remaining;
+      short* tBuffer = NULL;
+      size_t tBytesToFill = tBytesRemaining;
       int tMin = 0;
       int tMax = 0;
 
-      pa_stream_begin_write(stream, (void**)&buffer, &bytes_to_fill);
+      pa_stream_begin_write(aStream, (void**)&tBuffer, &tBytesToFill);
 
-      int nsamples = (int)bytes_to_fill / 2;
-      int samples_read = op_read(mFile, buffer, nsamples, NULL);
-      if (samples_read < 0)
+      int tSamplesToFill = (int)tBytesToFill / 2;
+
+      // Read from file into buffer. 
+      int tSamplesRead = op_read(mFile, tBuffer, tSamplesToFill, NULL);
+      if (tSamplesRead < 0)
       {
-         printf("read error %d\n", samples_read);
+         printf("read error %d\n", tSamplesRead);
          return;
       }
-      int bytes_read = samples_read * 2;
+      int bytes_read = tSamplesRead * 2;
+
       // Metrics.
-      for (int i = 0; i < samples_read; i++)
+      for (int i = 0; i < tSamplesRead; i++)
       {
-         short tValue = buffer[i];
+         short tValue = tBuffer[i];
          if (tValue < tMin) tMin = tValue;
          if (tValue > tMax) tMax = tValue;
       }
-      pa_stream_write(stream, buffer, bytes_read, NULL, 0LL, PA_SEEK_RELATIVE);
 
-      bytes_remaining -= bytes_read;
+      // Write buffer to stream.
+      pa_stream_write(aStream, tBuffer, bytes_read, NULL, 0LL, PA_SEEK_RELATIVE);
+
+      tBytesRemaining -= bytes_read;
 
       printf("stream_write_cb %d %d %d %d $ %d %d\n",
-         write_count++,
-         (int)requested_bytes,
-         (int)bytes_to_fill,
-         (int)bytes_remaining,
+         mWriteCount++,
+         (int)aRequestedBytes,
+         (int)tBytesToFill,
+         (int)tBytesRemaining,
          tMin,tMax);
    }
 }

@@ -48,6 +48,26 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
 //******************************************************************************
 //******************************************************************************
 
+void CmdLineExec::special(int aSpecial)
+{
+   switch (aSpecial)
+   {
+   case 0:
+      Prn::setFilter(Prn::Show1, false);
+      break;
+   case 1:
+      Prn::setFilter(Prn::Show1, true);
+      break;
+   default:
+      Prn::setFilter(Prn::Show1, false);
+      break;
+   }
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
 void CmdLineExec::executePlay(Ris::CmdLineCmd* aCmd)
 {
    aCmd->setArgDefault(1, 0.0);

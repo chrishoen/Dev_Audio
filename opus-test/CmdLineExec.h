@@ -12,8 +12,9 @@ public:
 
    CmdLineExec();
 
-   void reset();
-   void execute(Ris::CmdLineCmd* aCmd);
+   void reset() override;
+   void execute(Ris::CmdLineCmd* aCmd) override;
+   void special(int aSpecial) override;
 
    void executeGo1(Ris::CmdLineCmd* aCmd);
    void executeGo2(Ris::CmdLineCmd* aCmd);

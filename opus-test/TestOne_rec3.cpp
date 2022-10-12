@@ -81,34 +81,34 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
 
    // Read.
    int tRet = 0;
-   short* peek_sample_buffer = 0;
-   size_t bytes_to_peek = aLength;
+   short* tPeekSampleBuffer = 0;
+   size_t tBytesToPeek = aLength;
    int tMin = 0;
    int tMax = 0;
 
    // Stream peek. 
-   pa_stream_peek(aStream, (const void**)&peek_sample_buffer, &bytes_to_peek);
-   int samples_to_peek = bytes_to_peek / 2;
+   pa_stream_peek(aStream, (const void**)&tPeekSampleBuffer, &tBytesToPeek);
+   int tSamplesToPeek = tBytesToPeek / 2;
+
    // Metrics.
-   for (int i = 0; i < samples_to_peek; i++)
+   for (int i = 0; i < tSamplesToPeek; i++)
    {
-      short tValue = peek_sample_buffer[i];
+      short tValue = tPeekSampleBuffer[i];
       if (tValue < tMin) tMin = tValue;
       if (tValue > tMax) tMax = tValue;
    }
+
    // Write the samples to the encoder file.
-   ope_encoder_write(mEncoder, peek_sample_buffer, samples_to_peek);
+   ope_encoder_write(mEncoder, tPeekSampleBuffer, tSamplesToPeek);
 
    // Stream drop.
    pa_stream_drop(aStream);
 
-   if (mShowFlag)
-   {
-      printf("stream_read_cb %d %d $ %4d %4d\n",
-         mReadCount++,
-         samples_to_peek,
-         tMin, tMax);
-   }
+   // Show.
+   Prn::print(Prn::Show1, "stream_read_cb %d %d $ %4d %4d",
+      mReadCount++,
+      tSamplesToPeek,
+      tMin, tMax);
 }
 
 //******************************************************************************
@@ -248,6 +248,9 @@ static void context_state_cb(pa_context* aContext, void* aUserData)
 void doRec3(bool aShowFlag)
 {
    int tRet;
+
+   // Do this first.
+   Prn::setFilter(Prn::Show1, true);
 
    // Set the sample spec.
    mSampleSpec.rate = 44100;

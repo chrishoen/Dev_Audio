@@ -67,7 +67,7 @@ static const char* cDeviceName = "alsa_input.usb-046d_HD_Pro_Webcam_C920_51F943A
 //static const char* cDeviceName = "alsa_input.hw_0_0";
 static struct OggOpusEnc* mEncoder;
 static struct OggOpusComments* mComments;
-static int read_count = 0;
+static int mReadCount = 0;
 static bool mShowFlag = false;
 static bool mWriteFlag = true;
 
@@ -80,7 +80,7 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
    int count = 0;
 
    // Read.
-   int retval = 0;
+   int tRet = 0;
    short* peek_sample_buffer = 0;
    size_t bytes_to_peek = length;
    int tMin = 0;
@@ -105,7 +105,7 @@ static void stream_read_cb(pa_stream* stream, size_t length, void* userdata)
    if (mShowFlag)
    {
       printf("stream_read_cb %d %d $ %4d %4d\n",
-         read_count++,
+         mReadCount++,
          samples_to_peek,
          tMin, tMax);
    }
@@ -166,7 +166,7 @@ static void stream_state_cb(pa_stream* s, void* userdata)
 
 static void context_state_cb(pa_context* c, void* userdata)
 {
-   int retval = 0;
+   int tRet = 0;
    switch (pa_context_get_state(c)) {
    case PA_CONTEXT_CONNECTING:
       printf("context connecting\n");
@@ -205,12 +205,12 @@ static void context_state_cb(pa_context* c, void* userdata)
          PA_STREAM_ADJUST_LATENCY);
       stream_flags = (pa_stream_flags_t)0;
       // Connect stream to the default audio output sink
-   // retval = pa_stream_connect_record(stream, NULL, &buffer_attr, stream_flags);
-   // retval = pa_stream_connect_record(stream, cDeviceName, NULL, stream_flags);
-      retval = pa_stream_connect_record(stream, NULL, NULL, stream_flags);
-      if (retval)
+   // tRet = pa_stream_connect_record(stream, NULL, &buffer_attr, stream_flags);
+   // tRet = pa_stream_connect_record(stream, cDeviceName, NULL, stream_flags);
+      tRet = pa_stream_connect_record(stream, NULL, NULL, stream_flags);
+      if (tRet)
       {
-         printf("pa_stream_connect_record FAIL %d %s\n", retval, pa_strerror(retval));
+         printf("pa_stream_connect_record FAIL %d %s\n", tRet, pa_strerror(tRet));
          return;
       }
       printf("pa_stream_connect_record PASS\n");
@@ -238,7 +238,7 @@ static void context_state_cb(pa_context* c, void* userdata)
 
 void doRec3(bool aShowFlag)
 {
-   int retval;
+   int tRet;
    int error;
 
    // Set the global sample spec.
@@ -253,16 +253,16 @@ void doRec3(bool aShowFlag)
    ope_comments_add(mComments, "ARTIST", "steno");
    ope_comments_add(mComments, "TITLE", "talking");
    // Opus encoder.
-   mEncoder = ope_encoder_create_file(cFilePath, mComments, 44100, 1, 0, &retval);
+   mEncoder = ope_encoder_create_file(cFilePath, mComments, 44100, 1, 0, &tRet);
    if (!mEncoder)
    {
-      fprintf(stderr, "error encoding to file %s: %s\n", cFilePath, ope_strerror(retval));
+      fprintf(stderr, "error encoding to file %s: %s\n", cFilePath, ope_strerror(tRet));
       ope_comments_destroy(mComments);
       return;
    }
-   if (retval)
+   if (tRet)
    {
-      printf("opus_encoder_create FAIL %d\n", retval);
+      printf("opus_encoder_create FAIL %d\n", tRet);
       return;
    }
    printf("opus_encoder_create PASS\n");
@@ -278,14 +278,14 @@ void doRec3(bool aShowFlag)
    pa_threaded_mainloop_lock(mainloop);
 
    // Start the mainloop
-   retval = pa_threaded_mainloop_start(mainloop);
-   if (retval)
+   tRet = pa_threaded_mainloop_start(mainloop);
+   if (tRet)
    {
       printf("pa_threaded_mainloop_start FAIL\n");
       return;
    }
-   retval = pa_context_connect(context, NULL, PA_CONTEXT_NOAUTOSPAWN, NULL);
-   if (retval)
+   tRet = pa_context_connect(context, NULL, PA_CONTEXT_NOAUTOSPAWN, NULL);
+   if (tRet)
    {
       printf("pa_context_connect FAIL\n");
       return;

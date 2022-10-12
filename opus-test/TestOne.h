@@ -29,4 +29,7 @@ void doRec3(bool aShowFlag);
 void doStopRec3();
 void doShowRec3();
 
+void doPause3();
+void doResume3();
+
 void doShowInfo();

@@ -78,6 +78,9 @@ static double mLastTime = 0;
 static double mDeltaTime = 0;
 static double mStartReadTime = 0;
 
+static bool mPauseReq = false;
+static bool mResumeReq = false;
+static bool mWriteFlag = false;
 
 //******************************************************************************
 //******************************************************************************
@@ -95,6 +98,22 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
    mLastTime = mTime;
    mTime = Ris::getProgramTime() - mStartReadTime;
    mDeltaTime = mTime - mLastTime;
+
+   // Check for pause request.
+   if (mPauseReq)
+   {
+      Prn::print(Prn::Show1, "paused %.3f", mTime);
+      mPauseReq = false;
+      mWriteFlag = false;
+   }
+
+   // Check for resume request.
+   if (mResumeReq)
+   {
+      Prn::print(Prn::Show1, "resumed %.3f", mTime);
+      mResumeReq = false;
+      mWriteFlag = true;
+   }
 
    // Read.
    int tRet = 0;
@@ -116,14 +135,18 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
    }
 
    // Write the samples to the encoder file.
-   ope_encoder_write(mEncoder, tPeekSampleBuffer, tSamplesToPeek);
+   if (mWriteFlag)
+   {
+      ope_encoder_write(mEncoder, tPeekSampleBuffer, tSamplesToPeek);
+   }
 
    // Stream drop.
    pa_stream_drop(aStream);
 
    // Show.
-   Prn::print(Prn::Show1, "stream_read_cb %4d $ %.3f  %.3f $ %5d $ %5d %5d",
+   Prn::print(Prn::Show2, "stream_read_cb %4d %1d $ %.3f  %.3f $ %5d $ %5d %5d",
       mReadCount++,
+      mWriteFlag,
       mTime, mDeltaTime,
       tSamplesToPeek,
       tMin, tMax);
@@ -268,8 +291,11 @@ void doRec3(bool aShowFlag)
    int tRet;
 
    // Do this first.
-   Prn::setFilter(Prn::Show1, true);
+   Prn::setFilter(Prn::Show2, true);
    mFirstReadFlag = true;
+   mPauseReq = false;
+   mResumeReq = false;
+   mWriteFlag = true;
 
    // Set the sample spec.
    mSampleSpec.rate = 44100;
@@ -398,6 +424,24 @@ void doStopRec3()
    mMainLoop = 0;
    mContext = 0;
    mStream = 0;
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
+void doPause3()
+{
+   mPauseReq = true;
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
+void doResume3()
+{
+   mResumeReq = true;
 }
 
 //******************************************************************************

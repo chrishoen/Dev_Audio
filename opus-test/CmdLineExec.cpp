@@ -42,6 +42,8 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
    if (aCmd->isCmd("INFO"))  doShowInfo();
    if (aCmd->isCmd("SHOW"))  executeShow(aCmd);
    if (aCmd->isCmd("S"))     executeStop(aCmd);
+   if (aCmd->isCmd("P"))     executePause(aCmd);
+   if (aCmd->isCmd("R"))     executeResume(aCmd);
 }
 
 //******************************************************************************
@@ -53,13 +55,13 @@ void CmdLineExec::special(int aSpecial)
    switch (aSpecial)
    {
    case 0:
-      Prn::setFilter(Prn::Show1, false);
+      Prn::setFilter(Prn::Show2, false);
       break;
    case 1:
-      Prn::setFilter(Prn::Show1, true);
+      Prn::setFilter(Prn::Show2, true);
       break;
    default:
-      Prn::setFilter(Prn::Show1, false);
+      Prn::setFilter(Prn::Show2, false);
       break;
    }
 }
@@ -102,6 +104,24 @@ void CmdLineExec::executeRec3(Ris::CmdLineCmd* aCmd)
 {
    aCmd->setArgDefault(1, true);
    doRec3(aCmd->argBool(1));
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
+void CmdLineExec::executePause(Ris::CmdLineCmd* aCmd)
+{
+   doPause3();
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
+void CmdLineExec::executeResume(Ris::CmdLineCmd* aCmd)
+{
+   doResume3();
 }
 
 //******************************************************************************

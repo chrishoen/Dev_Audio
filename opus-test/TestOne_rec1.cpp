@@ -116,7 +116,7 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
    pa_stream_drop(aStream);
 
    // Show.
-   Prn::print(Prn::Show1, "stream_read_cb %4d $ %.3f  %.3f $ %5d $ %5d %5d",
+   Prn::print(Prn::Show2, "stream_read_cb %4d $ %.3f  %.3f $ %5d $ %5d %5d",
       mReadCount++,
       mTime, mDeltaTime,
       tSamplesToPeek,
@@ -262,7 +262,7 @@ void doRec1(bool aShowFlag)
    int tRet;
 
    // Do this first.
-   Prn::setFilter(Prn::Show1, true);
+   Prn::setFilter(Prn::Show2, true);
    mFirstReadFlag = true;
 
    // Set the sample spec.

@@ -24,6 +24,7 @@ public:
    void executePlay(Ris::CmdLineCmd* aCmd);
    void executeRec1(Ris::CmdLineCmd* aCmd);
    void executeRec2(Ris::CmdLineCmd* aCmd);
+   void executeRec3(Ris::CmdLineCmd* aCmd);
    void executeStop(Ris::CmdLineCmd* aCmd);
    void executeShow(Ris::CmdLineCmd* aCmd);
 

@@ -84,7 +84,7 @@ static void stream_write_cb(pa_stream* aStream, size_t aRequestedBytes, void* aU
          printf("read error %d\n", tSamplesRead);
          return;
       }
-      int bytes_read = tSamplesRead * 2;
+      int tBytesRead = tSamplesRead * 2;
 
       // Metrics.
       for (int i = 0; i < tSamplesRead; i++)
@@ -95,9 +95,9 @@ static void stream_write_cb(pa_stream* aStream, size_t aRequestedBytes, void* aU
       }
 
       // Write buffer to stream.
-      pa_stream_write(aStream, tBuffer, bytes_read, NULL, 0LL, PA_SEEK_RELATIVE);
+      pa_stream_write(aStream, tBuffer, tBytesRead, NULL, 0LL, PA_SEEK_RELATIVE);
 
-      tBytesRemaining -= bytes_read;
+      tBytesRemaining -= tBytesRead;
 
       printf("stream_write_cb %d %d %d %d $ %d %d\n",
          mWriteCount++,

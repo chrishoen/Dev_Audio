@@ -10,7 +10,7 @@ Description:
 #include <stdio.h>
 #include <assert.h>
 #include <pulse/pulseaudio.h>
-#include <opusenc.h>
+#include <opus/opusfile.h>
 
 #include "risProgramTime.h"
 #include "TestOne.h"
@@ -47,7 +47,7 @@ static void stream_buffer_attr_cb(pa_stream* aStream, void* aUserData)
 {
    printf("stream_buffer_attr_cb\n");
 }
-static void stream_success_cb(pa_stream* aStream, int aSuccess, void* aUserData)
+static void stream_success_cb(pa_stream* aStream, int aSuccess,void* aUserData)
 {
    printf("stream_success_cb %d\n", aSuccess);
    return;
@@ -64,104 +64,80 @@ static pa_stream* mStream = 0;
 
 static pa_sample_spec mSampleSpec;
 
-static const char* cFilePath = "/opt/prime/tmp/record.opus";
-static const char* cDeviceName = "alsa_input.usb-046d_HD_Pro_Webcam_C920_51F943AF-02.analog-stereo";
-//static const char* cDeviceName = "alsa_input.hw_0_0";
-static struct OggOpusEnc* mEncoder;
-static struct OggOpusComments* mComments;
+//static const char* cFilePath = "/opt/prime/tmp/record.opus";
+static const char* cFilePath = "/opt/prime/single/kashmir1.opus";
+static OggOpusFile* mOpusFile = 0;
 
-static int mReadCount = 0;
+static int mWriteCount = 0;
 
-static bool mFirstReadFlag = false;
+static bool mFirstWriteFlag = false;
 static double mTime = 0;
 static double mLastTime = 0;
 static double mDeltaTime = 0;
-static double mStartReadTime = 0;
-static double mStopReadTime = 0;
-
-static bool mPauseReq = false;
-static bool mResumeReq = false;
-static bool mWriteFlag = false;
+static double mStartWriteTime = 0;
 
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
 
-static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
+static void stream_write_cb(pa_stream* aStream, size_t aRequestedBytes, void* aUserData)
 {
-   int tRet = 0;
    // Get times.
-   if (mFirstReadFlag)
+   if (mFirstWriteFlag)
    {
-      mFirstReadFlag = false;
-      mStartReadTime = Ris::getProgramTime();
+      mFirstWriteFlag = false;
+      mStartWriteTime = Ris::getProgramTime();
       static double mDeltaTime = 0;
    }
    mLastTime = mTime;
-   mTime = Ris::getProgramTime() - mStartReadTime;
+   mTime = Ris::getProgramTime() - mStartWriteTime;
    mDeltaTime = mTime - mLastTime;
 
-   // Check for pause request.
-   if (mPauseReq)
+   size_t tBytesRemaining = aRequestedBytes;
+   while (tBytesRemaining > 0)
    {
-      // Flags.
-      Prn::print(Prn::Show1, "paused %.3f", mTime);
-      mPauseReq = false;
-      mWriteFlag = false;
-   }
+      // Begin write buffer to stream.
+      int tRet = 0;
+      short* tBuffer = NULL;
+      size_t tBytesToFill = tBytesRemaining;
+      int tMin = 0;
+      int tMax = 0;
 
-   // Check for resume request.
-   if (mResumeReq)
-   {
-      // Flags.
-      Prn::print(Prn::Show1, "resumed %.3f", mTime);
-      mResumeReq = false;
-      mWriteFlag = true;
-      // Chain a new stream.
-      tRet = ope_encoder_chain_current(mEncoder, mComments);
-      if (tRet)
+      pa_stream_begin_write(aStream, (void**)&tBuffer, &tBytesToFill);
+
+      int tSamplesToFill = (int)tBytesToFill / 2;
+
+      // Read from file into buffer. 
+      int tSamplesRead = op_read(mOpusFile, tBuffer, tSamplesToFill, NULL);
+      if (tSamplesRead < 0)
       {
-         Prn::print(Prn::Show1, "ope_encoder_chain_current FAIL");
-         mWriteFlag = false;
+         printf("read error %d\n", tSamplesRead);
          return;
       }
-      Prn::print(Prn::Show1, "ope_encoder_chain_current PASS");
+      int tBytesRead = tSamplesRead * 2;
+
+      // Metrics.
+      for (int i = 0; i < tSamplesRead; i++)
+      {
+         short tValue = tBuffer[i];
+         if (tValue < tMin) tMin = tValue;
+         if (tValue > tMax) tMax = tValue;
+      }
+
+      // Write buffer to stream.
+      pa_stream_write(aStream, tBuffer, tBytesRead, NULL, 0LL, PA_SEEK_RELATIVE);
+
+      tBytesRemaining -= tBytesRead;
+
+      // Show.
+      Prn::print(Prn::Show2, "stream_write_cb %4d $ %.3f  %.3f $ %5d  %5d  %5d $ %5d %5d",
+         mWriteCount++,
+         mTime, mDeltaTime,
+         (int)aRequestedBytes,
+         (int)tBytesToFill,
+         (int)tBytesRemaining,
+         tMin, tMax);
    }
-
-   // Read.
-   short* tPeekSampleBuffer = 0;
-   size_t tBytesToPeek = aLength;
-   int tMin = 0;
-   int tMax = 0;
-
-   // Stream peek. 
-   pa_stream_peek(aStream, (const void**)&tPeekSampleBuffer, &tBytesToPeek);
-   int tSamplesToPeek = tBytesToPeek / 2;
-
-   // Metrics.
-   for (int i = 0; i < tSamplesToPeek; i++)
-   {
-      short tValue = tPeekSampleBuffer[i];
-      if (tValue < tMin) tMin = tValue;
-      if (tValue > tMax) tMax = tValue;
-   }
-
-   // Write the samples to the encoder file.
-   if (mWriteFlag)
-   {
-      ope_encoder_write(mEncoder, tPeekSampleBuffer, tSamplesToPeek);
-   }
-
-   // Stream drop.
-   pa_stream_drop(aStream);
-
-   // Show.
-   Prn::print(Prn::Show2, "stream_read_cb %4d %1d $ %.3f  %.3f $ %5d $ %5d %5d",
-      mReadCount++,
-      mWriteFlag,
-      mTime, mDeltaTime,
-      tSamplesToPeek,
-      tMin, tMax);
 }
 
 //******************************************************************************
@@ -240,7 +216,7 @@ static void context_state_cb(pa_context* aContext, void* aUserData)
       printf("context ready\n");
 
       // Create a stream
-      mStream = pa_stream_new(mContext, "Record", &mSampleSpec, NULL);
+      mStream = pa_stream_new(mContext, "Playback", &mSampleSpec, NULL);
       if (!mStream)
       {
          printf("pa_stream_new FAIL\n");
@@ -250,7 +226,7 @@ static void context_state_cb(pa_context* aContext, void* aUserData)
 
       // Assign stream callbacks.
       pa_stream_set_state_callback(mStream, stream_state_cb, NULL);
-      pa_stream_set_read_callback(mStream, stream_read_cb, NULL);
+      pa_stream_set_write_callback(mStream, stream_write_cb, NULL);
       pa_stream_set_suspended_callback(mStream, stream_suspended_cb, NULL);
       pa_stream_set_moved_callback(mStream, stream_moved_cb, NULL);
       pa_stream_set_underflow_callback(mStream, stream_underflow_cb, NULL);
@@ -261,22 +237,27 @@ static void context_state_cb(pa_context* aContext, void* aUserData)
       printf("set stream callbacks PASS\n");
 
       // Connect stream.
+      pa_buffer_attr tBufferAttr;
+      tBufferAttr.maxlength = (uint32_t)-1;
+      tBufferAttr.tlength = (uint32_t)-1;
+      tBufferAttr.prebuf = (uint32_t)-1;
+      tBufferAttr.minreq = (uint32_t)-1;
+
       pa_stream_flags_t tStreamFlags;
       tStreamFlags = (pa_stream_flags_t)(
          PA_STREAM_START_CORKED | PA_STREAM_INTERPOLATE_TIMING |
          PA_STREAM_NOT_MONOTONIC | PA_STREAM_AUTO_TIMING_UPDATE |
          PA_STREAM_ADJUST_LATENCY);
-      tStreamFlags = (pa_stream_flags_t)0;
       // Connect stream to the default audio output sink
    // tRet = pa_stream_connect_record(stream, NULL, &buffer_attr, stream_flags);
    // tRet = pa_stream_connect_record(stream, cDeviceName, NULL, stream_flags);
-      tRet = pa_stream_connect_record(mStream, NULL, NULL, tStreamFlags);
+      tRet = pa_stream_connect_playback(mStream, NULL, &tBufferAttr, tStreamFlags, NULL, NULL);
       if (tRet)
       {
-         printf("pa_stream_connect_record FAIL %d %s\n", tRet, pa_strerror(tRet));
+         printf("pa_stream_connect_playback FAIL %d %s\n", tRet, pa_strerror(tRet));
          return;
       }
-      printf("pa_stream_connect_record PASS\n");
+      printf("pa_stream_connect_playback PASS\n");
       printf("context ready done\n");
       // Signal the main thread.
       pa_threaded_mainloop_signal((pa_threaded_mainloop*)mMainLoop, 0);
@@ -298,7 +279,7 @@ static void context_state_cb(pa_context* aContext, void* aUserData)
 //******************************************************************************
 //******************************************************************************
 
-void doRec3(bool aShowFlag)
+void doPlay2(bool aShowFlag, double aSkip)
 {
    int tRet;
 
@@ -307,41 +288,36 @@ void doRec3(bool aShowFlag)
    {
       Prn::setFilter(Prn::Show2, true);
    }
-   mFirstReadFlag = true;
-   mPauseReq = false;
-   mResumeReq = false;
-   mWriteFlag = true;
+   mFirstWriteFlag = true;
 
    // Set the sample spec.
-   mSampleSpec.rate = 44100;
+   mSampleSpec.rate = 48000;
    mSampleSpec.channels = 1;
    mSampleSpec.format = PA_SAMPLE_S16LE;
 
    // Open opus file.
-   printf("opening opus record file %s\n", cFilePath);
-   // Opus comments.
-   mComments = ope_comments_create();
-   ope_comments_add(mComments, "ARTIST", "steno");
-   ope_comments_add(mComments, "TITLE", "talking");
-   // Opus encoder.
-   mEncoder = ope_encoder_create_file(cFilePath, mComments, 44100, 1, 0, &tRet);
-   if (!mEncoder)
+   printf("opening opus file %s\n", cFilePath);
+   int tError = 0;
+   mOpusFile = op_open_file(cFilePath, &tError);
+   if (tError)
    {
-      fprintf(stderr, "error encoding to file %s: %s\n", cFilePath, ope_strerror(tRet));
-      ope_comments_destroy(mComments);
+      printf("opus file FAIL %d\n", tError);
       return;
    }
+
+   // Seek opus file.
+   long long tSkip = aSkip * mSampleSpec.rate;
+   printf("seeking opus file %lld\n", tSkip);
+   tRet = op_pcm_seek(mOpusFile, tSkip);
    if (tRet)
    {
-      printf("opus_encoder_create FAIL %d\n", tRet);
+      printf("opus seek FAIL %d\n", tRet);
       return;
    }
-   printf("opus_encoder_create PASS\n");
-
    // Get a mainloop and its context
    mMainLoop = pa_threaded_mainloop_new();
    mMainLoopApi = pa_threaded_mainloop_get_api(mMainLoop);
-   mContext = pa_context_new(mMainLoopApi, "pcm-record");
+   mContext = pa_context_new(mMainLoopApi, "pcm-playback");
    pa_context_set_state_callback(mContext, &context_state_cb, mMainLoop);
 
    // Lock the mainloop so that it does not run and crash before the context is ready
@@ -407,11 +383,10 @@ void doRec3(bool aShowFlag)
 //******************************************************************************
 //******************************************************************************
 
-void doStopRec3()
+void doStopPlay2()
 {
    if (mMainLoop == 0) return;
-   mStopReadTime = Ris::getProgramTime() - mStartReadTime;
-   Prn::print(Prn::Show1, "stopping %.3f\n", mStopReadTime);
+   printf("stopping\n");
    pa_threaded_mainloop_stop(mMainLoop);
    pa_stream_disconnect(mStream);
    pa_context_disconnect(mContext);
@@ -432,11 +407,7 @@ void doStopRec3()
       pa_threaded_mainloop_free(mMainLoop);
    }
 
-   ope_encoder_drain(mEncoder);
-   ope_encoder_destroy(mEncoder);
-   ope_comments_destroy(mComments);
-
-   Prn::print(Prn::Show1, "stopped %.3f\n", mStopReadTime);
+   printf("stopped\n");
    mMainLoop = 0;
    mContext = 0;
    mStream = 0;
@@ -446,28 +417,10 @@ void doStopRec3()
 //******************************************************************************
 //******************************************************************************
 
-void doPause3()
-{
-   mPauseReq = true;
-}
-
-//******************************************************************************
-//******************************************************************************
-//******************************************************************************
-
-void doResume3()
-{
-   mResumeReq = true;
-}
-
-//******************************************************************************
-//******************************************************************************
-//******************************************************************************
-
-void doShowRec3()
+void doShowPlay2()
 {
    if (!mMainLoop) return;
-   printf("show2*****************************************\n");
+   printf("show play 2*****************************************\n");
    pa_threaded_mainloop_lock(mMainLoop);
 
    switch (pa_stream_get_state(mStream))

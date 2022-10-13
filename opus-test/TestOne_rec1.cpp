@@ -273,7 +273,7 @@ void doRec1(bool aShowFlag)
    // Get a mainloop and its context
    mMainLoop = pa_threaded_mainloop_new();
    mMainLoopApi = pa_threaded_mainloop_get_api(mMainLoop);
-   mContext = pa_context_new(mMainLoopApi, "pcm-playback");
+   mContext = pa_context_new(mMainLoopApi, "pcm-record");
    pa_context_set_state_callback(mContext, &context_state_cb, mMainLoop);
 
    // Lock the mainloop so that it does not run and crash before the context is ready

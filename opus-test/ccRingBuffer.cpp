@@ -119,12 +119,12 @@ void RingBufferWriter::doWrite(void* aElement)
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
-// Write an array of elements to the array at the write index. Increment
-// the write index accordingly.
+// Write an array of source elements to the array at the write index.
+// Increment the write index accordingly.
 
-void RingBufferWriter::doWriteArray(void* aElement, int aNumElements)
+void RingBufferWriter::doWriteArray(void* aElementSourceArray, int aNumElements)
 {
-   char* tPtr = (char*)aElement;
+   char* tPtr = (char*)aElementSourceArray;
    for (int i = 0; i < aNumElements; i++)
    {
       doWrite((void*)tPtr);
@@ -448,19 +448,21 @@ void RingBufferReader::doUndoLastRead()
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
-// Read an element from the array, copying it to the function argument.
-// Return true if successful.
+// Read a number of elements from the array, copying them to the
+// function argument destination array. Return the number of elements
+// that were copied.
 
-bool RingBufferReader::doReadArray(void* aElement, int aNumElements)
+int RingBufferReader::doReadArray(void* aElementDestinArray, int aNumElements)
 {
-   char* tPtr = (char*)aElement;
+   int tCount = 0;
+   char* tPtr = (char*)aElementDestinArray;
    for (int i = 0; i < aNumElements; i++)
    {
-      bool tPass = doRead((void*)tPtr);
+      if (!doRead((void*)tPtr)) break;
       tPtr += mRB->mElementSize;
-      if (!tPass) return false;
+      tCount++;
    }
-   return true;
+   return tCount;
 }
 
 //******************************************************************************

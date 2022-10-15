@@ -89,9 +89,11 @@ static bool mWriteFlag = false;
 
 static RecorderState mSX;
 
-static CC::MemoryRingBuffer<short, 11* cSampleRate, 0> mRingBuffer;
+static CC::MemoryRingBuffer<short, 12 * cSampleRate, 0> mRingBuffer;
 static CC::RingBufferWriter mRingWriter;
 static CC::RingBufferReader mRingReader;
+
+static short mResumeArray[2000];
 
 //******************************************************************************
 //******************************************************************************
@@ -127,11 +129,36 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
    if (mResumeReq)
    {
       // Flags.
-      Trc::write(1, 0,       "resume   %.3f $ %d", mTime, mRingReader.available());
-      Prn::print(Prn::Show1, "resume   %.3f $ %d", mTime, mRingReader.available());
       mResumeReq = false;
       mWriteFlag = true;
       mSX.setRecording();
+
+      // Read ten seconds from ring buffer into encoder.
+      int tAvailableRingRead = mRingReader.available();
+      int tRemainingRingRead = cSampleRate * 10;
+      int tSumRingRead = 0;
+      int tNumRingRead = 0;
+      int tFrameSize = 1102;
+      while (true)
+      {
+         // Read from ring buffer.
+         tNumRingRead = mRingReader.doReadArray(mResumeArray, tFrameSize);
+         // Write to encoder.
+         if (tNumRingRead)
+         {
+            ope_encoder_write(mEncoder, mResumeArray, tNumRingRead);
+         }
+         // Update loop variables.
+         tSumRingRead += tNumRingRead;
+         tRemainingRingRead -= tNumRingRead;
+         if (tNumRingRead == 0) break;
+         if (tRemainingRingRead < tFrameSize) break;
+      }
+      // Show.
+      Trc::write(1, 0,       "resume   %.3f $ %d %d",
+         mTime, tAvailableRingRead, tSumRingRead);
+      Prn::print(Prn::Show1, "resume   %.3f $ %d %d",
+         mTime, tAvailableRingRead, tSumRingRead);
    }
    
    // Read.

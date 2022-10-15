@@ -103,7 +103,12 @@ static void stream_write_cb(pa_stream* aStream, size_t aRequestedBytes, void* aU
       int tMin = 0;
       int tMax = 0;
 
-      pa_stream_begin_write(aStream, (void**)&tBuffer, &tBytesToFill);
+      tRet = pa_stream_begin_write(aStream, (void**)&tBuffer, &tBytesToFill);
+      if (tRet)
+      {
+         printf("pa_stream_begin_write FAIL\n");
+         return;
+      }
 
       int tSamplesToFill = (int)tBytesToFill / 2;
 
@@ -114,6 +119,14 @@ static void stream_write_cb(pa_stream* aStream, size_t aRequestedBytes, void* aU
          printf("read error %d\n", tSamplesRead);
          return;
       }
+      if (tSamplesRead == 0)
+      {
+         printf("read empty %d\n", tSamplesRead);
+         pa_stream_cancel_write(mStream);
+         pa_stream_disconnect(mStream);
+         return;
+      }
+
       int tBytesRead = tSamplesRead * 2;
 
       // Metrics.
@@ -125,7 +138,12 @@ static void stream_write_cb(pa_stream* aStream, size_t aRequestedBytes, void* aU
       }
 
       // Write buffer to stream.
-      pa_stream_write(aStream, tBuffer, tBytesRead, NULL, 0LL, PA_SEEK_RELATIVE);
+      tRet = pa_stream_write(aStream, tBuffer, tBytesRead, NULL, 0LL, PA_SEEK_RELATIVE);
+      if (tRet)
+      {
+         printf("pa_stream_write FAIL\n");
+         return;
+      }
 
       tBytesRemaining -= tBytesRead;
 

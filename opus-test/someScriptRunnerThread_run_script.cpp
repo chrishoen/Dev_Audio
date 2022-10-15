@@ -53,7 +53,7 @@ void ScriptRunnerThread::executeRunScript()
             mNotify.testException();
 
             // Delay.
-            mNotify.waitForTimer(cScriptThrottle);
+            //mNotify.waitForTimer(cScriptThrottle);
 
             // Execute the script file command.
             execute(&mCmd);

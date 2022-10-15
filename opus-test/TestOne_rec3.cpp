@@ -134,31 +134,36 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
       mSX.setRecording();
 
       // Read ten seconds from ring buffer into encoder.
-      int tAvailableRingRead = mRingReader.available();
-      int tRemainingRingRead = cSampleRate * 10;
-      int tSumRingRead = 0;
-      int tNumRingRead = 0;
+      int tAvailable = mRingReader.available();
+      int tRemaining = cSampleRate * 10;
+      int tSum = 0;
+      int tNum = 0;
+      int tNumToRead = 0;
       int tFrameSize = 1102;
       while (true)
       {
          // Read from ring buffer.
-         tNumRingRead = mRingReader.doReadArray(mResumeArray, tFrameSize);
+         tNumToRead = tRemaining % tFrameSize;
+         tNumToRead = tFrameSize;
+
+         tNum = mRingReader.doReadArray(mResumeArray, tNumToRead);
          // Write to encoder.
-         if (tNumRingRead)
+         if (tNum)
          {
-            ope_encoder_write(mEncoder, mResumeArray, tNumRingRead);
+            ope_encoder_write(mEncoder, mResumeArray, tNum);
          }
          // Update loop variables.
-         tSumRingRead += tNumRingRead;
-         tRemainingRingRead -= tNumRingRead;
-         if (tNumRingRead == 0) break;
-         if (tRemainingRingRead < tFrameSize) break;
+         tSum += tNum;
+         tRemaining -= tNum;
+         if (tNum == 0) break;
+         if (tRemaining < tFrameSize) break;
+         //if (tRemaining == 0) break;
       }
       // Show.
       Trc::write(1, 0,       "resume   %.3f $ %d %d",
-         mTime, tAvailableRingRead, tSumRingRead);
+         mTime, tAvailable, tSum);
       Prn::print(Prn::Show1, "resume   %.3f $ %d %d",
-         mTime, tAvailableRingRead, tSumRingRead);
+         mTime, tAvailable, tSum);
    }
    
    // Read.

@@ -69,7 +69,7 @@ void ScriptRunnerThread::showThreadInfo()
 
 void ScriptRunnerThread::threadInitFunction()
 {
-   Trc::write(11, 0, "ScriptRunnerThread::threadInitFunction done");
+   Trc::write(10, 0, "ScriptRunnerThread::threadInitFunction done");
 }
 
 //******************************************************************************
@@ -81,7 +81,7 @@ void ScriptRunnerThread::threadInitFunction()
 void ScriptRunnerThread::threadExitFunction()
 {
    Prn::print(0, "ScriptRunnerThread::threadExitFunction END");
-   Trc::write(11, 0, "ScriptRunnerThread::threadExitFunction done");
+   Trc::write(10, 0, "ScriptRunnerThread::threadExitFunction done");
 }
 
 //******************************************************************************
@@ -93,7 +93,7 @@ void ScriptRunnerThread::threadExitFunction()
 
 void ScriptRunnerThread::shutdownThreads()
 {
-   Trc::write(11, 0, "ScriptRunnerThread::shutdownThread");
+   Trc::write(10, 0, "ScriptRunnerThread::shutdownThread");
    Prn::print(0, "ScriptRunnerThread::shutdownThread BEGIN");
 
    // Abort the long thread.
@@ -103,7 +103,7 @@ void ScriptRunnerThread::shutdownThreads()
    BaseClass::shutdownThreads();
 
    Prn::print(0, "ScriptRunnerThread::shutdownThread END");
-   Trc::write(11, 0, "ScriptRunnerThread::shutdownThread done");
+   Trc::write(10, 0, "ScriptRunnerThread::shutdownThread done");
 }
 
 //******************************************************************************

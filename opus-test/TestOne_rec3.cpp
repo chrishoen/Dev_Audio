@@ -99,6 +99,7 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
       mFirstReadFlag = false;
       mStartReadTime = Ris::getProgramTime();
       static double mDeltaTime = 0;
+      Trc::write(1, 0, "start    %.3f", mTime);
    }
    mLastTime = mTime;
    mTime = Ris::getProgramTime() - mStartReadTime;
@@ -108,6 +109,7 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
    if (mPauseReq)
    {
       // Flags.
+      Trc::write(1, 0, "pause    %.3f", mTime);
       Prn::print(Prn::Show1, "paused %.3f", mTime);
       mPauseReq = false;
       mWriteFlag = false;
@@ -118,6 +120,7 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
    if (mResumeReq)
    {
       // Flags.
+      Trc::write(1, 0, "resume   %.3f", mTime);
       Prn::print(Prn::Show1, "resumed %.3f", mTime);
       mResumeReq = false;
       mWriteFlag = true;
@@ -152,6 +155,14 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
    pa_stream_drop(aStream);
 
    // Show.
+   Trc::write(2, 0, "stream_read_cb %4d %1d %s $ %.3f  %.3f $ %5d $ %5d %5d",
+      mReadCount++,
+      mWriteFlag,
+      mSX.asString(),
+      mTime, mDeltaTime,
+      tSamplesToPeek,
+      tMin, tMax);
+
    Prn::print(Prn::Show2, "stream_read_cb %4d %1d %s $ %.3f  %.3f $ %5d $ %5d %5d",
       mReadCount++,
       mWriteFlag,
@@ -309,6 +320,8 @@ void doRec3(bool aShowFlag)
    mResumeReq = false;
    mWriteFlag = true;
    mSX.set_Recording();
+   Trc::start(1);
+   Trc::start(2);
 
    // Set the sample spec.
    mSampleSpec.rate = 44100;
@@ -437,6 +450,7 @@ void doStopRec3()
    ope_comments_destroy(mComments);
 
    Prn::print(Prn::Show1, "stopped %.3f\n", mStopReadTime);
+   Trc::write(1, 0, "stop     %.3f", mTime);
    mMainLoop = 0;
    mContext = 0;
    mStream = 0;

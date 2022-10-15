@@ -24,8 +24,7 @@ void ScriptRunnerThread::executeRunScript()
    Prn::print(0, "running script");
    Prn::print(Prn::Show1, "ScriptSeqThread::executeRunScript BEGIN");
    // Trace.
-   Trc::start(1);
-   Trc::write(1, 0, "executeRunScript BEGIN");
+   Trc::write(10, 0, "executeRunScript BEGIN");
 
    // Initialize variables.
    mLoopExitCode = 0;
@@ -65,7 +64,7 @@ void ScriptRunnerThread::executeRunScript()
    {
       mLoopExitCode = cLoopExitAborted;
       Prn::print(0, "EXCEPTION ScriptSeqThread::executeRunScript %d %s", aException, mNotify.mException);
-      Trc::write(1, 0, "EXCEPTION ScriptSeqThread::executeRunScript %d %s", aException, mNotify.mException);
+      Trc::write(10, 0, "EXCEPTION ScriptSeqThread::executeRunScript %d %s", aException, mNotify.mException);
    }
 
    // Test the exit code.
@@ -74,7 +73,7 @@ void ScriptRunnerThread::executeRunScript()
       // Print and log.
       Prn::print(0, "script done");
       Prn::print(0, "");
-      Trc::write(1, 0, "script done");
+      Trc::write(10, 0, "script done");
 
       // Set the state and send a string to the controller.
       gState.setStateSX2_Done();
@@ -87,7 +86,7 @@ void ScriptRunnerThread::executeRunScript()
       // Print and log.
       Prn::print(0, "script aborted");
       Prn::print(0, "");
-      Trc::write(1, 0, "script aborted");
+      Trc::write(10, 0, "script aborted");
 
       // Set the state and send a string to the controller.
       gState.setStateSX2_Aborted();
@@ -97,7 +96,7 @@ void ScriptRunnerThread::executeRunScript()
    mScript.doClose();
 
    Prn::print(Prn::Show1, "ScriptSeqThread::executeRunScript END");
-   Trc::write(1, 0, "executeRunScript END");
+   Trc::write(10, 0, "executeRunScript END");
 }
 
 //******************************************************************************

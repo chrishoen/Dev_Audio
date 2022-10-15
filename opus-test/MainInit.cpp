@@ -47,11 +47,14 @@ void main_initialize(int argc,char** argv)
    // Initialize trace facility.
 
    Trc::reset();
-   Trc::create_buffer(1, 3,  "script");
-   Trc::create_buffer(2, 3,  "record");
+   Trc::create_buffer(1, 3, "record");
+   Trc::create_buffer(2, 3, "record samples");
    Trc::set_default_trace_index(1);
-   //Trc::create_log(11, 4, "log/ProtoSerial_trace11.log");
+   Trc::create_buffer(10, 3, "script");
+   //Trc::create_log(11, 4, "log/opus-test_trace1.log");
    Trc::initialize();
+   Trc::start(10);
+
 }
 
 //******************************************************************************

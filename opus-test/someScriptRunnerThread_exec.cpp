@@ -35,7 +35,7 @@ void ScriptRunnerThread::execute(Ris::CmdLineCmd* aCmd)
 
 void ScriptRunnerThread::executeRecord(Ris::CmdLineCmd* aCmd)
 {
-   Trc::write(1, 0, "executeRecord");
+   Trc::write(10, 0, "executeRecord");
    doRec3(true);
 }
 
@@ -45,7 +45,7 @@ void ScriptRunnerThread::executeRecord(Ris::CmdLineCmd* aCmd)
 
 void ScriptRunnerThread::executePause(Ris::CmdLineCmd* aCmd)
 {
-   Trc::write(1, 0, "executePause");
+   Trc::write(10, 0, "executePause");
    doPause3();
 }
 
@@ -55,7 +55,7 @@ void ScriptRunnerThread::executePause(Ris::CmdLineCmd* aCmd)
 
 void ScriptRunnerThread::executeResume(Ris::CmdLineCmd* aCmd)
 {
-   Trc::write(1, 0, "executeResume");
+   Trc::write(10, 0, "executeResume");
    doResume3();
 }
 
@@ -65,7 +65,7 @@ void ScriptRunnerThread::executeResume(Ris::CmdLineCmd* aCmd)
 
 void ScriptRunnerThread::executeStop(Ris::CmdLineCmd* aCmd)
 {
-   Trc::write(1, 0, "executeStop");
+   Trc::write(10, 0, "executeStop");
    doStopRec3();
 }
 
@@ -77,7 +77,7 @@ void ScriptRunnerThread::executeWait(Ris::CmdLineCmd* aCmd)
 {
    int tDelay = (int)aCmd->argDouble(1) * 1000;
    Prn::print(Prn::Show1, 0, "Wait %d", tDelay);
-   Trc::write(1, 0, "executeWait %d", tDelay);
+   Trc::write(10, 0, "executeWait %d", tDelay);
 
    mNotify.waitForTimer(tDelay);
 

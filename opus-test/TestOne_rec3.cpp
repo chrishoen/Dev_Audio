@@ -140,13 +140,18 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
       int tNum = 0;
       int tNumToRead = 0;
       int tFrameSize = 1102;
+      int tCount = 0;
       while (true)
       {
          // Read from ring buffer.
          tNumToRead = tRemaining % tFrameSize;
          tNumToRead = tFrameSize;
-
+         tNumToRead = tRemaining > tFrameSize ? tFrameSize : tRemaining;
          tNum = mRingReader.doReadArray(mResumeArray, tNumToRead);
+
+         Trc::write(3, 0, "resume    $  %3d %6d %3d %3d",
+            tCount++, tRemaining, tNumToRead, tNum);
+
          // Write to encoder.
          if (tNum)
          {
@@ -156,8 +161,7 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
          tSum += tNum;
          tRemaining -= tNum;
          if (tNum == 0) break;
-         if (tRemaining < tFrameSize) break;
-         //if (tRemaining == 0) break;
+         if (tRemaining == 0) break;
       }
       // Show.
       Trc::write(1, 0,       "resume   %.3f $ %d %d",
@@ -368,6 +372,7 @@ void doRec3(bool aShowFlag)
    mSX.setRecording();
    Trc::start(1);
    Trc::start(2);
+   Trc::start(3);
 
    // Initialize ring buffer.
    mRingBuffer.initialize();

@@ -122,6 +122,7 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
       mResumeReq = false;
       mWriteFlag = true;
       mSX.set_Recording();
+#if 0  
       // Chain a new stream.
       tRet = ope_encoder_chain_current(mEncoder, mComments);
       if (tRet)
@@ -131,6 +132,7 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
          return;
       }
       Prn::print(Prn::Show1, "ope_encoder_chain_current PASS");
+#endif
    }
 
    // Read.

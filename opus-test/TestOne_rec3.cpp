@@ -89,7 +89,7 @@ static bool mWriteFlag = false;
 
 static RecorderState mSX;
 
-static CC::MemoryRingBuffer<short, 10* cSampleRate, 0> mRingBuffer;
+static CC::MemoryRingBuffer<short, 11* cSampleRate, 0> mRingBuffer;
 static CC::RingBufferWriter mRingWriter;
 static CC::RingBufferReader mRingReader;
 

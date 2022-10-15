@@ -52,9 +52,14 @@ public:
    // Methods.
 
    // Set state variables.
-   void set_Stopped();
-   void set_Recording();
-   void set_Paused();
+   void setStopped();
+   void setRecording();
+   void setPaused();
+
+   // Test state variables.
+   bool isStopped();
+   bool isRecording();
+   bool isPaused();
 
    // Return the state as a string.
    const char* asString();

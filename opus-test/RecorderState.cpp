@@ -45,19 +45,39 @@ const char* RecorderState::asString()
 //******************************************************************************
 // Set state variables.
 
-void RecorderState::set_Stopped()
+void RecorderState::setStopped()
 { 
    mSX = cState_Stopped;
 }
 
-void RecorderState::set_Recording()
+void RecorderState::setRecording()
 {
    mSX = cState_Recording;
 }
 
-void RecorderState::set_Paused()
+void RecorderState::setPaused()
 {
    mSX = cState_Paused;
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+// Test state variables.
+
+bool RecorderState::isStopped()
+{
+   return mSX == cState_Stopped;
+}
+
+bool RecorderState::isRecording()
+{
+   return mSX == cState_Recording;
+}
+
+bool RecorderState::isPaused()
+{
+   return mSX == cState_Paused;
 }
 
 //******************************************************************************

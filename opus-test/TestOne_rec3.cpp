@@ -14,6 +14,8 @@ Description:
 
 #include "risProgramTime.h"
 #include "RecorderState.h"
+#include "ccRingBufferEx.h"
+
 #include "TestOne.h"
 
 //******************************************************************************
@@ -67,6 +69,7 @@ static pa_sample_spec mSampleSpec;
 
 static const char* cFilePath = "/opt/prime/tmp/record.opus";
 static const char* cDeviceName = "alsa_input.usb-046d_HD_Pro_Webcam_C920_51F943AF-02.analog-stereo";
+static const int cSampleRate = 44100;
 //static const char* cDeviceName = "alsa_input.hw_0_0";
 static struct OggOpusEnc* mEncoder;
 static struct OggOpusComments* mComments;
@@ -85,6 +88,10 @@ static bool mResumeReq = false;
 static bool mWriteFlag = false;
 
 static RecorderState mSX;
+
+static CC::MemoryRingBuffer<short, 10* cSampleRate, 0> mRingBuffer;
+static CC::RingBufferWriter mRingWriter;
+static CC::RingBufferReader mRingReader;
 
 //******************************************************************************
 //******************************************************************************
@@ -113,18 +120,18 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
       Prn::print(Prn::Show1, "paused %.3f", mTime);
       mPauseReq = false;
       mWriteFlag = false;
-      mSX.set_Paused();
+      mSX.setPaused();
    }
 
    // Check for resume request.
    if (mResumeReq)
    {
       // Flags.
-      Trc::write(1, 0, "resume   %.3f", mTime);
-      Prn::print(Prn::Show1, "resumed %.3f", mTime);
+      Trc::write(1, 0,       "resume   %.3f $ %d", mTime, mRingReader.available());
+      Prn::print(Prn::Show1, "resume   %.3f $ %d", mTime, mRingReader.available());
       mResumeReq = false;
       mWriteFlag = true;
-      mSX.set_Recording();
+      mSX.setRecording();
    }
    
    // Read.
@@ -143,6 +150,13 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
       short tValue = tPeekSampleBuffer[i];
       if (tValue < tMin) tMin = tValue;
       if (tValue > tMax) tMax = tValue;
+   }
+
+   // If paused then write samples to the ring buffer.
+   if (mSX.isPaused())
+   {
+      // Write the samples to the ring buffer.
+      mRingWriter.doWriteArray(tPeekSampleBuffer, tSamplesToPeek);
    }
 
    // Write the samples to the encoder file.
@@ -319,12 +333,20 @@ void doRec3(bool aShowFlag)
    mPauseReq = false;
    mResumeReq = false;
    mWriteFlag = true;
-   mSX.set_Recording();
+   mSX.setRecording();
    Trc::start(1);
    Trc::start(2);
 
+   // Initialize ring buffer.
+   mRingBuffer.initialize();
+   mRingWriter.initialize(&mRingBuffer, &mRingBuffer.mElementArrayMemory);
+   mRingReader.initialize(&mRingBuffer, &mRingBuffer.mElementArrayMemory);
+   short tDummy = -99;
+   mRingWriter.doWrite(&tDummy);
+   mRingReader.doRead(&tDummy);
+
    // Set the sample spec.
-   mSampleSpec.rate = 44100;
+   mSampleSpec.rate = cSampleRate;
    mSampleSpec.channels = 1;
    mSampleSpec.format = PA_SAMPLE_S16LE;
 
@@ -335,7 +357,7 @@ void doRec3(bool aShowFlag)
    ope_comments_add(mComments, "ARTIST", "steno");
    ope_comments_add(mComments, "TITLE", "talking");
    // Opus encoder.
-   mEncoder = ope_encoder_create_file(cFilePath, mComments, 44100, 1, 0, &tRet);
+   mEncoder = ope_encoder_create_file(cFilePath, mComments, cSampleRate, 1, 0, &tRet);
    if (!mEncoder)
    {
       fprintf(stderr, "error encoding to file %s: %s\n", cFilePath, ope_strerror(tRet));
@@ -420,7 +442,7 @@ void doRec3(bool aShowFlag)
 
 void doStopRec3()
 {
-   mSX.set_Stopped();
+   mSX.setStopped();
 
    if (mMainLoop == 0) return;
    mStopReadTime = Ris::getProgramTime() - mStartReadTime;

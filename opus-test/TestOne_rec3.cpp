@@ -13,6 +13,7 @@ Description:
 #include <opusenc.h>
 
 #include "risProgramTime.h"
+#include "RecorderState.h"
 #include "TestOne.h"
 
 //******************************************************************************
@@ -83,6 +84,8 @@ static bool mPauseReq = false;
 static bool mResumeReq = false;
 static bool mWriteFlag = false;
 
+static RecorderState mSX;
+
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
@@ -108,6 +111,7 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
       Prn::print(Prn::Show1, "paused %.3f", mTime);
       mPauseReq = false;
       mWriteFlag = false;
+      mSX.set_Paused();
    }
 
    // Check for resume request.
@@ -117,6 +121,7 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
       Prn::print(Prn::Show1, "resumed %.3f", mTime);
       mResumeReq = false;
       mWriteFlag = true;
+      mSX.set_Recording();
       // Chain a new stream.
       tRet = ope_encoder_chain_current(mEncoder, mComments);
       if (tRet)
@@ -156,9 +161,10 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
    pa_stream_drop(aStream);
 
    // Show.
-   Prn::print(Prn::Show2, "stream_read_cb %4d %1d $ %.3f  %.3f $ %5d $ %5d %5d",
+   Prn::print(Prn::Show2, "stream_read_cb %4d %1d %s $ %.3f  %.3f $ %5d $ %5d %5d",
       mReadCount++,
       mWriteFlag,
+      mSX.asString(),
       mTime, mDeltaTime,
       tSamplesToPeek,
       tMin, tMax);
@@ -311,6 +317,7 @@ void doRec3(bool aShowFlag)
    mPauseReq = false;
    mResumeReq = false;
    mWriteFlag = true;
+   mSX.set_Recording();
 
    // Set the sample spec.
    mSampleSpec.rate = 44100;
@@ -409,6 +416,8 @@ void doRec3(bool aShowFlag)
 
 void doStopRec3()
 {
+   mSX.set_Stopped();
+
    if (mMainLoop == 0) return;
    mStopReadTime = Ris::getProgramTime() - mStartReadTime;
    Prn::print(Prn::Show1, "stopping %.3f\n", mStopReadTime);

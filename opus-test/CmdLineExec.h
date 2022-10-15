@@ -19,7 +19,6 @@ public:
    void executeRun(Ris::CmdLineCmd* aCmd);
    void executeSin1(Ris::CmdLineCmd* aCmd);
    void executePlay1(Ris::CmdLineCmd* aCmd);
-   void executePlay2(Ris::CmdLineCmd* aCmd);
 
    void executeRec1(Ris::CmdLineCmd* aCmd);
    void executeRec2(Ris::CmdLineCmd* aCmd);

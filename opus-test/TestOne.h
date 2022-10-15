@@ -14,11 +14,9 @@
 void doSin1();
 void doStopSin1();
 
-void doPlay1(double aSkip);
+void doPlay1(bool aShowFlag, double aSkip);
 void doStopPlay1();
-
-void doPlay2(bool aShowFlag, double aSkip);
-void doStopPlay2();
+void doShowPlay1();
 
 void doRec1(bool aShowFlag);
 void doStopRec1();

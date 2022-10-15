@@ -37,8 +37,7 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
 
    if (aCmd->isCmd("RUN"))     executeRun(aCmd);
    if (aCmd->isCmd("SIN"))     executeSin1(aCmd);
-   if (aCmd->isCmd("PLAY1"))   executePlay1(aCmd);
-   if (aCmd->isCmd("PLAY2"))   executePlay2(aCmd);
+   if (aCmd->isCmd("PLAY"))    executePlay1(aCmd);
    if (aCmd->isCmd("REC1"))    executeRec1(aCmd);
    if (aCmd->isCmd("REC2"))    executeRec2(aCmd);
    if (aCmd->isCmd("REC3"))    executeRec3(aCmd);
@@ -93,19 +92,9 @@ void CmdLineExec::executeSin1(Ris::CmdLineCmd* aCmd)
 
 void CmdLineExec::executePlay1(Ris::CmdLineCmd* aCmd)
 {
-   aCmd->setArgDefault(1, 0.0);
-   doPlay1(aCmd->argDouble(1));
-}
-
-//******************************************************************************
-//******************************************************************************
-//******************************************************************************
-
-void CmdLineExec::executePlay2(Ris::CmdLineCmd* aCmd)
-{
    aCmd->setArgDefault(1, true);
    aCmd->setArgDefault(2, 0.0);
-   doPlay2(aCmd->argBool(1), aCmd->argDouble(2));
+   doPlay1(aCmd->argBool(1), aCmd->argDouble(2));
 }
 
 //******************************************************************************
@@ -164,7 +153,6 @@ void CmdLineExec::executeStop(Ris::CmdLineCmd* aCmd)
 {
    doStopSin1();
    doStopPlay1();
-   doStopPlay2();
    doStopRec1();
    doStopRec2();
    doStopRec3();

@@ -15,4 +15,5 @@
 #include "prnPrint.h"
 #include "logFiles.h"
 #include "risPortableCalls.h"
+#include "trcTrace.h"
 

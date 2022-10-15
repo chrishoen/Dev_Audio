@@ -1,41 +1,78 @@
+
 #include "stdafx.h"
 
+#include "risThreadsProcess.h"
+#include "risBaseDir.h"
 
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
-// Initialize
+// Initialize.
 
 void main_initialize(int argc,char** argv)
 {
-   //***************************************************************************
-   //***************************************************************************
-   //***************************************************************************
-   // Enter process
+   printf("opus-test**********************************************BEGIN\n");
 
-   // Initialize print facility
+   //***************************************************************************
+   //***************************************************************************
+   //***************************************************************************
+   // Process configuration.
+
+   // Set the program current working directory up one level from the 
+   // program bin directory.
+   Ris::portableChdirUpFromBin();
+
+   // Set the base directory to the current working directory.
+   Ris::setBaseDirectoryToCurrent();
+
+   // Set the process priority class.
+   Ris::Threads::enterProcessHigh();
+
+   //***************************************************************************
+   //***************************************************************************
+   //***************************************************************************
+   // Initialize print facility.
+
+   // Initialize print.
    Prn::resetPrint();
    Prn::initializePrint();
 
-   // Initialize print filters
+   // Initialize print filters.
    Prn::setFilter(Prn::Show1, true);
    Prn::setFilter(Prn::Show2, false);
-   Prn::setFilter(Prn::Show3, false);
-   Prn::setFilter(Prn::Show4, false);
 
-   Prn::print(0, "audio-test*******************************************BEGIN");
+   //***************************************************************************
+   //***************************************************************************
+   //***************************************************************************
+   // Initialize trace facility.
+
+   Trc::reset();
+   Trc::create_buffer(1, 3,  "script");
+   Trc::create_buffer(2, 3,  "record");
+   Trc::set_default_trace_index(1);
+   //Trc::create_log(11, 4, "log/ProtoSerial_trace11.log");
+   Trc::initialize();
 }
 
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
-// Finalize
+// Finalize.
 
 void main_finalize()
 {
-   Prn::print(0,"audio-test*******************************************END");
-
-   // Close print
+   // Finalize print facility.
    Prn::finalizePrint();
+
+   // Finalize trace facility.
+   Trc::finalize();
+
+   // Exit process
+   Ris::Threads::exitProcess();
+
+   printf("opus-test**********************************************BEGIN\n");
 }
 
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************

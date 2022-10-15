@@ -1,8 +1,12 @@
+
 #include "stdafx.h"
 
-#include "MainInit.h"
+#include "risThreadsProcess.h"
 #include "risCmdLineConsole.h"
 #include "CmdLineExec.h"
+#include "MainInit.h"
+
+#include "someScriptRunnerThread.h"
 
 //******************************************************************************
 //******************************************************************************
@@ -13,14 +17,30 @@ int main(int argc,char** argv)
    //***************************************************************************
    //***************************************************************************
    //***************************************************************************
-   // Initialize the program.
+   // Begin program.
 
    main_initialize(argc,argv);
 
    //***************************************************************************
    //***************************************************************************
    //***************************************************************************
-   // Run the user command line executive, it returns when the user exits.
+   // Launch program threads.
+
+   Some::gScriptRunnerThread = new Some::ScriptRunnerThread;
+   Some::gScriptRunnerThread->launchThreads();
+
+   //***************************************************************************
+   //***************************************************************************
+   //***************************************************************************
+   // Show program threads.
+
+   Ris::Threads::showCurrentThreadInfo();
+   Some::gScriptRunnerThread->showThreadInfo();
+
+   //***************************************************************************
+   //***************************************************************************
+   //***************************************************************************
+   // Execute console command line executive, wait for user to exit.
 
    CmdLineExec* tExec = new CmdLineExec;
    Ris::gCmdLineConsole.execute(tExec);
@@ -29,7 +49,16 @@ int main(int argc,char** argv)
    //***************************************************************************
    //***************************************************************************
    //***************************************************************************
-   // Finalize the program.
+   // Shutdown program threads.
+
+   Some::gScriptRunnerThread->shutdownThreads();
+   delete Some::gScriptRunnerThread;
+   Some::gScriptRunnerThread = 0;
+
+   //***************************************************************************
+   //***************************************************************************
+   //***************************************************************************
+   // End program.
 
    main_finalize();
    return 0;

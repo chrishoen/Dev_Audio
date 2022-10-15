@@ -64,8 +64,8 @@ static pa_stream* mStream = 0;
 
 static pa_sample_spec mSampleSpec;
 
-//static const char* cFilePath = "/opt/prime/tmp/record.opus";
-static const char* cFilePath = "/opt/prime/single/kashmir1.opus";
+//static const char* cFilePath = "/opt/prime/single/kashmir1.opus";
+static const char* cFilePath = "/opt/prime/tmp/record.opus";
 static OggOpusFile* mOpusFile = 0;
 
 static int mWriteCount = 0;

@@ -2,6 +2,7 @@
 
 #include "CmdLineExec.h"
 #include "TestOne.h"
+#include "someScriptRunnerThread.h"
 
 #include "CmdLineExec.h"
 
@@ -34,7 +35,8 @@ void CmdLineExec::execute(Ris::CmdLineCmd* aCmd)
    if (aCmd->isCmd("GO5"))     executeGo5(aCmd);
    if (aCmd->isCmd("Parms"))   executeParms(aCmd);
 
-   if (aCmd->isCmd("SIN"))     doSin1();
+   if (aCmd->isCmd("RUN"))     executeRun(aCmd);
+   if (aCmd->isCmd("SIN"))     executeSin1(aCmd);
    if (aCmd->isCmd("PLAY1"))   executePlay1(aCmd);
    if (aCmd->isCmd("PLAY2"))   executePlay2(aCmd);
    if (aCmd->isCmd("REC1"))    executeRec1(aCmd);
@@ -65,6 +67,24 @@ void CmdLineExec::special(int aSpecial)
       Prn::setFilter(Prn::Show2, false);
       break;
    }
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
+void CmdLineExec::executeRun(Ris::CmdLineCmd* aCmd)
+{
+   Some::gScriptRunnerThread->mRunScriptQCall();
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
+void CmdLineExec::executeSin1(Ris::CmdLineCmd* aCmd)
+{
+   doSin1();
 }
 
 //******************************************************************************

@@ -122,8 +122,19 @@ static void stream_read_cb(pa_stream* aStream, size_t aLength, void* aUserData)
       mResumeReq = false;
       mWriteFlag = true;
       mSX.set_Recording();
+#if 0  
+      // Chain a new stream.
+      tRet = ope_encoder_chain_current(mEncoder, mComments);
+      if (tRet)
+      {
+         Prn::print(Prn::Show1, "ope_encoder_chain_current FAIL");
+         mWriteFlag = false;
+         return;
+      }
+      Prn::print(Prn::Show1, "ope_encoder_chain_current PASS");
+#endif
    }
-   
+
    // Read.
    short* tPeekSampleBuffer = 0;
    size_t tBytesToPeek = aLength;
